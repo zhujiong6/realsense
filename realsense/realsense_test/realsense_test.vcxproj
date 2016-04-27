@@ -110,8 +110,8 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OPENCV_BUILD)\lib\;$(RSSDK_DIR)\lib\x64;$(RSSDK_DIR)\sample\common\lib\x64\v140\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world310d.lib;libpxc_d.lib;libpxcutils_d.lib;libpxcutilsmd_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalDependencies>opencv_world310d.lib;libpxcmd_d.lib;libpxc_d.lib;libpxcutils_d.lib;libpxcutilsmd_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libcmtd.lib</IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
