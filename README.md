@@ -8,7 +8,9 @@
 2. OPENCV_DIR=d:\opencv-3.1.0\  
 
 ##setup include path in vs2015##
-VS2015 include: $(OPENCV_DIR)\build\include
+VS2015 include: $(OPENCV_DIR)\build\include  
+VS2015 lib path :$(OPENCV_BUILD)\lib\  
+input lib: opencv_world310d.lib  
 
 #intel realsense #
 env variables : $(RSSDK_DIR)  
