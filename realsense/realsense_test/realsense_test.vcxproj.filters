@@ -18,6 +18,9 @@
     <ClCompile Include="camera_viewer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="realsense2cvmat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="camera_viewer.rc">

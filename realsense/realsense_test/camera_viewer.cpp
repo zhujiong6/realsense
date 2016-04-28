@@ -7,20 +7,41 @@ accordance with the terms of that agreement
 Copyright(c) 2011-2014 Intel Corporation. All Rights Reserved.
 
 *******************************************************************************/
+#define	OPENCV_SUPPORTED	1	//OPENCV ONLY
+
 #include <windows.h>
+//opencv
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui/highgui.hpp>
+//realsense sdk
 #include "pxcsensemanager.h"
+#include "pxcsession.h"
 #include "pxcmetadata.h"
 #include "util_cmdline.h"
 #include "util_render.h"
+
+#include <iostream>
 #include <conio.h>
 
+#include "realsense2cvmat.h"
+
+//! [namespace]
+using namespace cv;
+using namespace std;
+//! [namespace]
+
 int wmain(int argc, WCHAR* argv[]) {
-    /* Creates an instance of the PXCSenseManager */
+    /* 1. Creates an instance of the PXCSenseManager */
     PXCSenseManager *pp = PXCSenseManager::CreateInstance();
     if (!pp) {
         wprintf_s(L"Unable to create the SenseManager\n");
         return 3;
     }
+	
+	PXCSession::ImplVersion version = pp->QuerySession()->QueryVersion();
+	std::cout << "SDK Version:" << version.major << "." << version.minor << std::endl;
+
 
     /* Collects command line arguments */
     UtilCmdLine cmdl(pp->QuerySession());
@@ -31,10 +52,15 @@ int wmain(int argc, WCHAR* argv[]) {
     cm->SetFileName(cmdl.m_recordedFile, cmdl.m_bRecord);
     if (cmdl.m_sdname) cm->FilterByDeviceInfo(cmdl.m_sdname,0,0);
 
-    // Create stream renders
-	UtilRender renderc(L"Color"), renderd(L"Depth"), renderi(L"IR"), renderr(L"Right"), renderl(L"Left");
+	#if	OPENCV_SUPPORTED
+		PXCImage *colorIm, *depthIm, *irIm, *rightIm, *leftIm;
+	#else
+		// Create stream renders
+		UtilRender renderc(L"Color"), renderd(L"Depth"), renderi(L"IR"), renderr(L"Right"), renderl(L"Left");
+	#endif
     pxcStatus sts;
     do {
+		//2. enable realsense camera streams
         /* Apply command line arguments */
         pxcBool revert = false;
         if (cmdl.m_csize.size()>0) {
@@ -62,8 +88,11 @@ int wmain(int argc, WCHAR* argv[]) {
             }
             pp->EnableStreams(&desc);
         }
+		// 3. Set the coordinate system
+		PXCSession *session = pp->QuerySession();
+		session->SetCoordinateSystem(PXCSession::COORDINATE_SYSTEM_FRONT_DEFAULT /*COORDINATE_SYSTEM_REAR_OPENCV*/);
 
-        /* Initializes the pipeline */
+        /* 4. Initializes the pipeline */
         sts = pp->Init();
         if (sts<PXC_STATUS_NO_ERROR) {
             if (revert) {
@@ -95,10 +124,10 @@ int wmain(int argc, WCHAR* argv[]) {
             device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_DISABLED);
         }
 
-        /* Stream Data */
+        /* 6. Stream Data */
         for (int nframes=0;nframes<cmdl.m_nframes;nframes++) {
             /* Waits until new frame is available and locks it for application processing */
-            sts=pp->AcquireFrame(false);
+            sts=pp->AcquireFrame(false);	//6.a capture the frame
 
             if (sts<PXC_STATUS_NO_ERROR) {
                 if (sts==PXC_STATUS_STREAM_CONFIG_CHANGED) {
@@ -110,28 +139,65 @@ int wmain(int argc, WCHAR* argv[]) {
 
             /* Render streams, unless -noRender is selected */
             if (cmdl.m_bNoRender == false) {
-                const PXCCapture::Sample *sample = pp->QuerySample();
+                const PXCCapture::Sample *sample = pp->QuerySample();// 6.b get the captured frame
                 if (sample) {
-                    if (sample->depth && !renderd.RenderFrame(sample->depth)) break;
-                    if (sample->color && !renderc.RenderFrame(sample->color)) break;
-					if (sample->ir    && !renderi.RenderFrame(sample->ir))    break;
-					if (sample->right    && !renderr.RenderFrame(sample->right))    break;
-					if (sample->left    && !renderl.RenderFrame(sample->left))    break;
+					#if OPENCV_SUPPORTED
+						if (sample->color) {
+							colorIm = sample->color;
+							cv::Mat colorMat;
+							ConvertPXCImageToOpenCVMat(colorIm, &colorMat, STREAM_TYPE_COLOR);
+							cv::imshow("OpenCV Window Color", colorMat);
+						}
+						if (sample->depth) {
+							depthIm = sample->depth;
+							cv::Mat depthMat;
+							ConvertPXCImageToOpenCVMat(depthIm, &depthMat, STREAM_TYPE_DEPTH);
+							cv::imshow("OpenCV Window Depth", depthMat);
+						}
+						if (sample->ir) {
+							irIm = sample->ir;
+							cv::Mat irMat;
+							ConvertPXCImageToOpenCVMat(irIm, &irMat, STREAM_TYPE_IR);
+							cv::imshow("OpenCV Window ir", irMat);
+						}
+						if (sample->left) {
+							leftIm = sample->left;
+							cv::Mat leftMat;
+							ConvertPXCImageToOpenCVMat(leftIm, &leftMat);
+							cv::imshow("OpenCV Window left", leftMat);
+						}
+						if (sample->right) {
+							rightIm = sample->right;
+							cv::Mat rightMat;
+							ConvertPXCImageToOpenCVMat(rightIm, &rightMat);
+							cv::imshow("OpenCV Window right", rightMat);
+						}
+					#else//windows render
+						if (sample->depth && !renderd.RenderFrame(sample->depth)) break;
+						if (sample->color && !renderc.RenderFrame(sample->color)) break;
+						if (sample->ir    && !renderi.RenderFrame(sample->ir))    break;
+						if (sample->right    && !renderr.RenderFrame(sample->right))    break;
+						if (sample->left    && !renderl.RenderFrame(sample->left))    break;
+					#endif // OPENCV_SUPPORTED
                 }
             }
-            /* Releases lock so pipeline can process next frame */
+            /* 7. Releases lock so pipeline can process next frame */
             pp->ReleaseFrame();
-
-            if( _kbhit() ) { // Break loop
-                int c = _getch() & 255;
-                if( c == 27 || c == 'q' || c == 'Q') break; // ESC|q|Q for Exit
-            }
+			#if OPENCV_SUPPORTED
+				int c=cv::waitKey(1);
+				if (c == 27 || c == 'q' || c == 'Q') break; // ESC|q|Q for Exit
+			#else
+				if( _kbhit() ) { // Break loop
+					int c = _getch() & 255;
+					if( c == 27 || c == 'q' || c == 'Q') break; // ESC|q|Q for Exit
+				}
+			#endif
         }
     } while (sts == PXC_STATUS_STREAM_CONFIG_CHANGED);
 
     wprintf_s(L"Exiting\n");
 
-    // Clean Up
+    // 8.Clean Up
     pp->Release();
     return 0;
 }
