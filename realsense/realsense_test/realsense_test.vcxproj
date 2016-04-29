@@ -160,10 +160,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera_viewer.cpp" />
+    <ClCompile Include="gui.cpp" />
     <ClCompile Include="realsense2cvmat.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="camera_viewer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gui.h" />
+    <ClInclude Include="realsense2cvmat.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
