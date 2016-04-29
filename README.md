@@ -1,7 +1,10 @@
+# Prepare a **POWERED USB3.0 port or POWERED USB3.0 hub** for Intel RealSense #
+
 # README.md markdown #
 <https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet>
+
 # How to install opencv 3.1 in visual studio 2015: #
-<https://www.youtube.com/watch?v=l4372qtZ4dc> 
+<https://www.youtube.com/watch?v=l4372qtZ4dc>
 
 ##setup environment variables in win10:##
 1. OPENCV_BUILD=d:\opencv-3.1.0\build\x64\vc14\    

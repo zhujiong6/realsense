@@ -14,6 +14,7 @@ Copyright(c) 2011-2014 Intel Corporation. All Rights Reserved.
 //opencv
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 //realsense sdk
 #include "pxcsensemanager.h"
@@ -42,7 +43,7 @@ int wmain(int argc, WCHAR* argv[]) {
         wprintf_s(L"Unable to create the SenseManager\n");
         return 3;
     }
-	
+
 	PXCSession::ImplVersion version = pp->QuerySession()->QueryVersion();
 	std::cout << "SDK Version:" << version.major << "." << version.minor << std::endl;
 
@@ -64,8 +65,10 @@ int wmain(int argc, WCHAR* argv[]) {
 	#endif
     pxcStatus sts;
 	my_gui myGui;
+	memset(&myGui,0,sizeof(myGui));
 	myGui.frames = 0;
-	myGui.imglist_size = MAX_REC_FRAMES;
+	myGui.roi_no = MAX_REC_FRAMES;
+
 	myGui.rect = cv::Rect(0,0,0,0);
 	myGui.depth_win_name = "OpenCV Window Depth";
 	myGui.win_name = "OpenCV Window Depth";
@@ -73,7 +76,7 @@ int wmain(int argc, WCHAR* argv[]) {
 	setMouseCallback(myGui.depth_win_name, onMouse, &myGui);//setup callback
 	myGui.color_win_name = "OpenCV Window Color";
 	namedWindow(myGui.color_win_name, WINDOW_AUTOSIZE/*WINDOW_KEEPRATIO*/);
-	
+
     do {
 		//2. enable realsense camera streams
         /* Apply command line arguments */
@@ -94,7 +97,11 @@ int wmain(int argc, WCHAR* argv[]) {
 			pp->EnableStream(PXCCapture::STREAM_TYPE_LEFT, cmdl.m_lsize.front().first.width, cmdl.m_lsize.front().first.height, (pxcF32)cmdl.m_lsize.front().second);
 		}
 		if (cmdl.m_csize.size() == 0 && cmdl.m_dsize.size() == 0 && cmdl.m_isize.size() == 0 && cmdl.m_rsize.size() == 0 && cmdl.m_lsize.size() == 0) {
-            PXCVideoModule::DataDesc desc={};
+#if 1
+			pp->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, FRAME_WIDTH, FRAME_HEIGHT, (pxcF32)IMAGE_FPS);
+            pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, FRAME_WIDTH, FRAME_HEIGHT, (pxcF32)IMAGE_FPS);
+#else
+			PXCVideoModule::DataDesc desc={};
             if (cm->QueryCapture()) {
                 cm->QueryCapture()->QueryDeviceInfo(0, &desc.deviceInfo);
             } else {
@@ -102,6 +109,7 @@ int wmain(int argc, WCHAR* argv[]) {
                 revert = true;
             }
             pp->EnableStreams(&desc);
+#endif
         }
 		// 3. Set the coordinate system
 		PXCSession *session = pp->QuerySession();
@@ -168,12 +176,20 @@ int wmain(int argc, WCHAR* argv[]) {
 							cv::Mat depthMat;
 							ConvertPXCImageToOpenCVMat(depthIm, &depthMat, STREAM_TYPE_DEPTH);
 							myGui.image = depthMat.clone();
+							int thickness = 1;
+							int lineType = 8;
+							int shift = 0;
+							cv::rectangle(depthMat, myGui.rect, Scalar(255, 255, 255), thickness, lineType, shift);
 							cv::imshow(myGui.depth_win_name, depthMat);
+							//insert the roi
+							hw4(myGui, depthMat);
+							/*
 							if (myGui.action && (myGui.frames++ < myGui.imglist_size)) {
 								Mat roi(depthMat, myGui.rect); // using a rectangle ROI
 								myGui.depth_imgs.insert(myGui.depth_imgs.begin(), &roi.clone());
 								printf("insert : %d/%d\n", myGui.frames, myGui.imglist_size);
 							}
+							*/
 						}
 						if (sample->ir) {
 							irIm = sample->ir;

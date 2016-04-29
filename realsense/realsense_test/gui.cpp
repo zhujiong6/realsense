@@ -67,10 +67,22 @@ void onMouse(int event, int x, int y, int flag, void* param) {
 		gui.rect.width = VertexThree.x - VertexOne.x+1;
 		gui.rect.height = VertexThree.y - VertexOne.y+1;
 		//Rectangle(Image, VertexOne, VertexThree, Color, Thickness, CV_AA, Shift);
-		if (event == CV_EVENT_MBUTTONDOWN) {//middle mouse button down to action
+		if ( (event == CV_EVENT_LBUTTONDBLCLK )|| (event == CV_EVENT_MBUTTONDOWN) ) {//middle mouse button down to action
 			gui.frames = 0;//reset it
 			gui.action = 1;
 			cout << "action" << endl;
+			if (gui.rois) {
+				//for all rois[i], delete rois[i]
+				delete [] gui.rois;
+				gui.rois = NULL;
+			}
+			
+			//const int ROWS = 2, COLS = 3, PLANES = 4;
+			//int dims[3] = { ROWS, COLS, PLANES };
+			//int sizes[] = { gui.rect.height, gui.rect.width, gui.roi_no };
+			//gui.rois = new cv::Mat(3, sizes, CV_16UC1, 0);
+			gui.rois = new cv::Mat[gui.roi_no];
+
 			cv::rectangle(Image, VertexOne, VertexThree, Scalar(255, 255, 255), thickness, lineType, shift);
 		}
 		else

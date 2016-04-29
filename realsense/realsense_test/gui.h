@@ -1,6 +1,9 @@
 #pragma once
 //gui for opencv
 //@author : <Thomas Tsai, d04922009@csie.ntu.edu.tw>
+#define	FRAME_WIDTH		(640)
+#define	FRAME_HEIGHT	(480)
+#define	IMAGE_FPS	(30)
 
 struct my_gui {
 	string color_win_name;
@@ -12,9 +15,11 @@ struct my_gui {
 	Rect rect;				//the target ROI rectangle (x,y,width,height)
 	int action;
 	int frames;
-	int imglist_size;		//how many images to be stored
-	vector<Mat *> depth_imgs;	//pointer list to the stored images
+	int roi_no;		//how many rois to be stored
+	//vector<Mat *> depth_imgs;	//pointer list to the stored images
+	cv::Mat *rois;	//the roi list
 };
 
 //callback of mouse event
 void onMouse(int event, int x, int y, int flag, void* param);
+void hw4(my_gui &myGui, Mat &depthMat);
