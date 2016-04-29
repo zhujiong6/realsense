@@ -7,7 +7,7 @@ accordance with the terms of that agreement
 Copyright(c) 2011-2014 Intel Corporation. All Rights Reserved.
 
 *******************************************************************************/
-//Thomas Tsai : d04922009@ntu.edu.tw
+//Thomas Tsai : d04922009@csie.ntu.edu.tw
 #define	OPENCV_SUPPORTED	1	//OPENCV ONLY
 
 #include <windows.h>
@@ -32,6 +32,8 @@ using namespace cv;
 using namespace std;
 //! [namespace]
 #include "gui.h"
+
+#define	MAX_REC_FRAMES	(300)
 
 int wmain(int argc, WCHAR* argv[]) {
     /* 1. Creates an instance of the PXCSenseManager */
@@ -62,12 +64,16 @@ int wmain(int argc, WCHAR* argv[]) {
 	#endif
     pxcStatus sts;
 	my_gui myGui;
+	myGui.frames = 0;
+	myGui.imglist_size = MAX_REC_FRAMES;
+	myGui.rect = cv::Rect(0,0,0,0);
 	myGui.depth_win_name = "OpenCV Window Depth";
 	myGui.win_name = "OpenCV Window Depth";
 	namedWindow(myGui.depth_win_name, WINDOW_AUTOSIZE);
 	setMouseCallback(myGui.depth_win_name, onMouse, &myGui);//setup callback
 	myGui.color_win_name = "OpenCV Window Color";
-	namedWindow(myGui.color_win_name, WINDOW_AUTOSIZE);
+	namedWindow(myGui.color_win_name, WINDOW_AUTOSIZE/*WINDOW_KEEPRATIO*/);
+	
     do {
 		//2. enable realsense camera streams
         /* Apply command line arguments */
@@ -163,6 +169,11 @@ int wmain(int argc, WCHAR* argv[]) {
 							ConvertPXCImageToOpenCVMat(depthIm, &depthMat, STREAM_TYPE_DEPTH);
 							myGui.image = depthMat.clone();
 							cv::imshow(myGui.depth_win_name, depthMat);
+							if (myGui.action && (myGui.frames++ < myGui.imglist_size)) {
+								Mat roi(depthMat, myGui.rect); // using a rectangle ROI
+								myGui.depth_imgs.insert(myGui.depth_imgs.begin(), &roi.clone());
+								printf("insert : %d/%d\n", myGui.frames, myGui.imglist_size);
+							}
 						}
 						if (sample->ir) {
 							irIm = sample->ir;

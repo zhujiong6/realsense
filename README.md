@@ -17,4 +17,20 @@ env variables : $(RSSDK_DIR)
 vs2015 c/c++  code generation: /MTD  
 vs2015 include : $(RSSDK_DIR)\include\;$(RSSDK_DIR)\sample\common\include\  
 vs2015 lib path : $(RSSDK_DIR)\lib\x64;$(RSSDK_DIR)\sample\common\lib\x64\v140\  
-input lib : libpxcmd_d.lib libpxc_d.lib libpxcutils_d.lib libpxcutilsmd_d.lib  
+input lib : libpxcmd_d.lib libpxc_d.lib libpxcutils_d.lib libpxcutilsmd_d.lib
+
+#command line
+-listio
+-nframes: total frames to capture
+-sdname
+-csize : %dx%dx%d => color image :width x height x fps
+-dsize : %dx%dx%d => depth image :width x height x fps
+-isize : %dx%dx%d => irda image :width x height x fps
+-lsize : %dx%dx%d => left image :width x height x fps
+-rsize : %dx%dx%d => right image :width x height x fps
+-file
+-record
+-noRender
+-mirror: mirror the display, so capture is like a morror
+
+detail : $(RSSDK_DIR)\sample\common\src\util_cmdline.cpp
