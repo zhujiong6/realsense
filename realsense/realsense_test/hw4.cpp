@@ -43,7 +43,7 @@ void hw4(my_gui &myGui, Mat &depthMat)
 			for(int j= 0; j < myGui.rect.width;j++)
 				for (int k= 0;  k < myGui.roi_no; k++) {
 					Mat mat = myGui.rois[k];
-					//mat.at<uint8>(i,j)
+					unsigned short us=mat.at<unsigned short>(i, j);
 				}
 
 		//free rois buffer
