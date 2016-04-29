@@ -40,11 +40,27 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		myGui.action = 0;//done
 
 		for(int i = 0; i < myGui.rect.height;i++)
-			for(int j= 0; j < myGui.rect.width;j++)
-				for (int k= 0;  k < myGui.roi_no; k++) {
+			for (int j = 0; j < myGui.rect.width;j++) {
+				//unsigned short *pixel_vec= new unsigned short[myGui.roi_no];
+				Mat pixel_vec(myGui.roi_no, 1, CV_32F);
+				for (int k = 0; k < myGui.roi_no; k++) {
 					Mat mat = myGui.rois[k];
-					unsigned short us=mat.at<unsigned short>(i, j);
+					pixel_vec.at<float>(k) = mat.at<unsigned short>(i, j);
+					printf("%d:%f\n",k, pixel_vec.at<float>(k));
 				}
+				
+				Mat tmp_m, tmp_sd;
+				double m = 0, sd = 0;
+
+				//m = mean(pixel_vec)[0];
+				//cout << "Mean: " << m << endl;
+
+				meanStdDev(pixel_vec, tmp_m, tmp_sd);
+				m = tmp_m.at<double>(0, 0);
+				sd = tmp_sd.at<double>(0, 0);
+				cout << "Mean: " << m << " , StdDev: " << sd << endl;
+				
+			}
 
 		//free rois buffer
 		printf("free myGui.rois[k] and myGui.rois\n");
