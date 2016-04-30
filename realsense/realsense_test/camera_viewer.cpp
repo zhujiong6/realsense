@@ -76,6 +76,15 @@ int wmain(int argc, WCHAR* argv[]) {
 	setMouseCallback(myGui.depth_win_name, onMouse, &myGui);//setup callback
 	myGui.color_win_name = "OpenCV Window Color";
 	namedWindow(myGui.color_win_name, WINDOW_AUTOSIZE/*WINDOW_KEEPRATIO*/);
+	
+	myGui.std_win_name = "std window";
+	namedWindow(myGui.std_win_name, WINDOW_NORMAL);
+	
+	myGui.mean_win_name = "mean window";
+	namedWindow(myGui.mean_win_name, WINDOW_NORMAL);
+	
+	myGui.crop_win_name = "cropped roi window";
+	namedWindow(myGui.crop_win_name, WINDOW_NORMAL);
 
     do {
 		//2. enable realsense camera streams
