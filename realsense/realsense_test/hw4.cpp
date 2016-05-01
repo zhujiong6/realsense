@@ -26,7 +26,7 @@ using namespace std;
 //! [namespace]
 #include "gui.h"
 
-/*
+/* (d)
 convert float matrix to 8bit unsigned char matrix
 */
 void quantization(Mat &src, Mat &dst)
@@ -104,22 +104,46 @@ void hw4(my_gui &myGui, Mat &depthMat)
 
 		cv::imshow(myGui.std_win_name, roi_std);
 		cv::imshow(myGui.mean_win_name, roi_mean);
-
+		////////////////////////////////////////////////////
+		//(c) mean and std of roi_std
+		Mat tmp_m, tmp_sd;
+		double m = 0, sd = 0;
+		meanStdDev(roi_std, tmp_m, tmp_sd);
+		m = tmp_m.at<double>(0, 0);
+		sd = tmp_sd.at<double>(0, 0);
+		cout << "(c) Mean: " << m << " , StdDev: " << sd << endl;
+		//////////////////////////////////////////////
+		// (d)
 		Mat std_8bit, mean_8bit;
 		quantization(roi_std, std_8bit);
 		cv::imshow(myGui.qtstd_win_name, std_8bit);
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
+		//(f)
 		string win_name = "std histogram";
 		draw_hist(std_8bit/*, win_name*/);
+
+		////////////////////////////////////////////////////
+		//(c) mean and std of roi_std
+		//Mat tmp_m, tmp_sd;
+		//double m = 0, sd = 0;
+		meanStdDev(std_8bit, tmp_m, tmp_sd);
+		m = tmp_m.at<double>(0, 0);
+		sd = tmp_sd.at<double>(0, 0);
+		cout << "(c) quantization Mean: " << m << " , StdDev: " << sd << endl;
+		//////////////////////////////////////////////
 
 		quantization(roi_mean, mean_8bit);
 		cv::imshow(myGui.qtmean_win_name, mean_8bit);
 
+		/////////////////////////////////////////////////
+		//(e)
+		/////////////////////////////////////////////////
 		Mat std_8bit_he, mean_8bit_he;
 		cv::equalizeHist(std_8bit, std_8bit_he);
 		cv::imshow(myGui.qthe_std_win_name, std_8bit_he);
 		win_name = "std histogram EQ";
+		//(f)
 		draw_hist(std_8bit_he/*, win_name*/);
 
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
