@@ -111,7 +111,7 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
 		string win_name = "std histogram";
-		draw_hist(std_8bit, win_name);
+		draw_hist(std_8bit/*, win_name*/);
 
 		quantization(roi_mean, mean_8bit);
 		cv::imshow(myGui.qtmean_win_name, mean_8bit);
@@ -120,7 +120,8 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		cv::equalizeHist(std_8bit, std_8bit_he);
 		cv::imshow(myGui.qthe_std_win_name, std_8bit_he);
 		win_name = "std histogram EQ";
-		draw_hist(std_8bit_he, win_name);
+		draw_hist(std_8bit_he/*, win_name*/);
+
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
 		cv::equalizeHist(mean_8bit, mean_8bit_he);

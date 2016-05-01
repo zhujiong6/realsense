@@ -160,7 +160,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera_viewer.cpp" />
-    <ClCompile Include="dip-lib.cpp" />
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="hw4.cpp" />
     <ClCompile Include="realsense2cvmat.cpp" />
@@ -169,7 +168,6 @@
     <ResourceCompile Include="camera_viewer.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dip.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="realsense2cvmat.h" />
   </ItemGroup>
