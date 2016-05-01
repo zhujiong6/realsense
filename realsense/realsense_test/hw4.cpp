@@ -28,6 +28,7 @@ using namespace std;
 
 /* (d)
 convert float matrix to 8bit unsigned char matrix
+src : 32bit float matrix
 */
 void quantization(Mat &src, Mat &dst)
 {
@@ -42,7 +43,7 @@ void quantization(Mat &src, Mat &dst)
 	dst.create(src.rows,src.cols,CV_8UC1);
 	for(int i = 0; i < src.rows; i ++)
 		for (int j = 0;j < src.cols;j++) {
-			dst.at <unsigned char>(i,j)= (unsigned char) ((src.at<double>(i,j) - minVal) * 255 / (maxVal - minVal) );
+			dst.at <unsigned char>(i,j)= (unsigned char) ((src.at<float>(i,j) - minVal) * 255 / (maxVal - minVal) );
 		}
 }
 
@@ -58,7 +59,7 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		cv::imshow(myGui.crop_win_name, roi);
 		cout << '.';
 		myGui.frames++;
-		//printf("insert : %d/%d\n", myGui.frames, myGui.roi_no);
+		printf("insert : %d/%d\n", myGui.frames, myGui.roi_no);
 		
 	}
 	//cout << endl;
@@ -120,8 +121,9 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
 		//(f)
-		string win_name = "std histogram";
-		draw_hist(std_8bit/*, win_name*/);
+		string win_name = "roi std :histogram";
+		//draw_hist2(std_8bit, win_name);
+		draw_hist(std_8bit, win_name);
 
 		////////////////////////////////////////////////////
 		//(c) mean and std of roi_std
@@ -142,9 +144,10 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		Mat std_8bit_he, mean_8bit_he;
 		cv::equalizeHist(std_8bit, std_8bit_he);
 		cv::imshow(myGui.qthe_std_win_name, std_8bit_he);
-		win_name = "std histogram EQ";
+		win_name = "roi std : histogram EQ";
 		//(f)
-		draw_hist(std_8bit_he/*, win_name*/);
+		//draw_hist2(std_8bit_he, win_name);
+		draw_hist(std_8bit_he, win_name);
 
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);

@@ -126,12 +126,6 @@ void myGui_init(my_gui &myGui)
 	myGui.color_win_name = "OpenCV Window Color";
 	namedWindow(myGui.color_win_name, WINDOW_AUTOSIZE/*WINDOW_KEEPRATIO*/);
 
-	myGui.std_win_name = "std window";
-	namedWindow(myGui.std_win_name, WINDOW_NORMAL);
-
-	myGui.mean_win_name = "mean window";
-	namedWindow(myGui.mean_win_name, WINDOW_NORMAL);
-
 	myGui.crop_win_name = "cropped roi window";
 	namedWindow(myGui.crop_win_name, WINDOW_NORMAL);
 
@@ -255,7 +249,7 @@ void draw_hist(Mat &image, const string &win_name, int h_size, int flag, Scalar 
 /*
 solid histogram
 */
-void draw_hist(Mat& image, int h_size)
+void draw_hist2(Mat& image, const string &win_name, int h_size)
 {
 	int bins = h_size;             // number of bins
 	int nc = image.channels();    // number of channels
@@ -308,8 +302,8 @@ void draw_hist(Mat& image, int h_size)
 				1, 8, 0
 			);
 		}
-
-		imshow(nc == 1 ? "value" : wname[i], canvas[i]);
+		namedWindow(nc == 1 ? win_name : wname[i], WINDOW_NORMAL);
+		imshow(nc == 1 ? win_name : wname[i], canvas[i]);
 	}
 }
 

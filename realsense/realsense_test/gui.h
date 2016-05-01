@@ -61,7 +61,7 @@ Mat &image: the image to show its histogram
 void draw_hist(Mat &image, const string &win_name, int h_size=(MAX_GREY_LEVEL+1), int flag = CV_WINDOW_NORMAL,
 	Scalar color = Scalar(255, 0, 0));
 
-void draw_hist(Mat& image, int h_size = (MAX_GREY_LEVEL + 1));
+void draw_hist2(Mat& image, const string &win_name, int h_size = (MAX_GREY_LEVEL + 1));
 
 /** @brief  output a format text by opencv
 *
