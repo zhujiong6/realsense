@@ -34,8 +34,6 @@ using namespace std;
 //! [namespace]
 #include "gui.h"
 
-#define	MAX_REC_FRAMES	(300)
-
 int wmain(int argc, WCHAR* argv[]) {
     /* 1. Creates an instance of the PXCSenseManager */
     PXCSenseManager *pp = PXCSenseManager::CreateInstance();
@@ -64,28 +62,13 @@ int wmain(int argc, WCHAR* argv[]) {
 		UtilRender renderc(L"Color"), renderd(L"Depth"), renderi(L"IR"), renderr(L"Right"), renderl(L"Left");
 	#endif
     pxcStatus sts;
+
+	//////////////////////////////////////////////
+	// my gui init
+	//////////////////////////////////////////////
 	my_gui myGui;
-	memset(&myGui,0,sizeof(myGui));
-	myGui.frames = 0;
-	myGui.roi_no = MAX_REC_FRAMES;
-
-	myGui.rect = cv::Rect(0,0,0,0);
-	myGui.depth_win_name = "OpenCV Window Depth";
-	myGui.win_name = "OpenCV Window Depth";
-	namedWindow(myGui.depth_win_name, WINDOW_AUTOSIZE);
-	setMouseCallback(myGui.depth_win_name, onMouse, &myGui);//setup callback
-	myGui.color_win_name = "OpenCV Window Color";
-	namedWindow(myGui.color_win_name, WINDOW_AUTOSIZE/*WINDOW_KEEPRATIO*/);
-	
-	myGui.std_win_name = "std window";
-	namedWindow(myGui.std_win_name, WINDOW_NORMAL);
-	
-	myGui.mean_win_name = "mean window";
-	namedWindow(myGui.mean_win_name, WINDOW_NORMAL);
-	
-	myGui.crop_win_name = "cropped roi window";
-	namedWindow(myGui.crop_win_name, WINDOW_NORMAL);
-
+	myGui_init(myGui);
+	////////////////////////////////////////////////////////
     do {
 		//2. enable realsense camera streams
         /* Apply command line arguments */

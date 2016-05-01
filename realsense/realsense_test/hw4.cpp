@@ -26,6 +26,26 @@ using namespace std;
 //! [namespace]
 #include "gui.h"
 
+/*
+convert float matrix to 8bit unsigned char matrix
+*/
+void quantization(Mat &src, Mat &dst)
+{
+	//void minMaxLoc(InputArray src, double* minVal, double* maxVal = 0, Point* minLoc = 0, Point* maxLoc = 0, InputArray mask = noArray())
+	double minVal, maxVal;
+	Point minLoc, maxLoc;
+	cv::minMaxLoc(src, &minVal, &maxVal, &minLoc, &maxLoc);
+	
+	printf("minVal=%.3f, maxVal=%.3f,minLoc=(x=%d,y=%d),maxLoc=(x=%d,y=%d)\n",
+		minVal, maxVal, minLoc.x, minLoc.y, maxLoc.x, maxLoc.y);
+
+	dst.create(src.rows,src.cols,CV_8UC1);
+	for(int i = 0; i < src.rows; i ++)
+		for (int j = 0;j < src.cols;j++) {
+			dst.at <unsigned char>(i,j)= (unsigned char) ((src.at<double>(i,j) - minVal) * 255 / (maxVal - minVal) );
+		}
+}
+
 void hw4(my_gui &myGui, Mat &depthMat)
 {
 	if (myGui.action && (myGui.frames < myGui.roi_no)) {
@@ -69,8 +89,8 @@ void hw4(my_gui &myGui, Mat &depthMat)
 				m = tmp_m.at<double>(0, 0);
 				sd = tmp_sd.at<double>(0, 0);
 				//cout << "Mean: " << m << " , StdDev: " << sd << endl;
-				roi_std.at<float>(i, j) = sd;
-				roi_mean.at<float>(i, j) = m;
+				roi_std.at<float>(i, j) = (float)sd;
+				roi_mean.at<float>(i, j) = (float)m;
 			}
 		//void minMaxLoc(InputArray src, double* minVal, double* maxVal = 0, Point* minLoc = 0, Point* maxLoc = 0, InputArray mask = noArray())
 		double std_minVal, std_maxVal, mean_minVal, mean_maxVal;
@@ -84,6 +104,28 @@ void hw4(my_gui &myGui, Mat &depthMat)
 
 		cv::imshow(myGui.std_win_name, roi_std);
 		cv::imshow(myGui.mean_win_name, roi_mean);
+
+		Mat std_8bit, mean_8bit;
+		quantization(roi_std, std_8bit);
+		cv::imshow(myGui.qtstd_win_name, std_8bit);
+		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
+		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
+		string win_name = "std histogram";
+		draw_hist(std_8bit, win_name);
+
+		quantization(roi_mean, mean_8bit);
+		cv::imshow(myGui.qtmean_win_name, mean_8bit);
+
+		Mat std_8bit_he, mean_8bit_he;
+		cv::equalizeHist(std_8bit, std_8bit_he);
+		cv::imshow(myGui.qthe_std_win_name, std_8bit_he);
+		win_name = "std histogram EQ";
+		draw_hist(std_8bit_he, win_name);
+		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
+		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
+		cv::equalizeHist(mean_8bit, mean_8bit_he);
+		cv::imshow(myGui.qthe_mean_win_name, mean_8bit_he);
+
 		//free rois buffer
 		printf("free myGui.rois[k] and myGui.rois\n");
 		delete[]myGui.rois;
