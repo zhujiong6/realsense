@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <conio.h>
+#include <fstream>
 
 #include "realsense2cvmat.h"
 
@@ -49,6 +50,9 @@ void quantization(Mat &src, Mat &dst)
 
 void hw4(my_gui &myGui, Mat &depthMat)
 {
+
+	ofstream fout;
+
 	if (myGui.action && (myGui.frames < myGui.roi_no)) {
 		Mat roi(depthMat, myGui.rect); // using a rectangle ROI
 		myGui.rois[myGui.frames]= roi.clone();
@@ -70,6 +74,7 @@ void hw4(my_gui &myGui, Mat &depthMat)
 
 		Mat roi_std(myGui.rect.height, myGui.rect.width, CV_32F);
 		Mat roi_mean(myGui.rect.height, myGui.rect.width, CV_32F);
+		
 		for(int i = 0; i < myGui.rect.height;i++)
 			for (int j = 0; j < myGui.rect.width;j++) {
 				//unsigned short *pixel_vec= new unsigned short[myGui.roi_no];
@@ -100,11 +105,30 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		//cv::minMaxLoc(roi_mean, &mean_minVal, &mean_maxVal, &mean_minLoc, &mean_maxLoc);
 		printf("std_minVal=%.3f, std_maxVal=%.3f,std_minLoc=(x=%d,y=%d),std_maxLoc=(x=%d,y=%d)\n",
 			std_minVal, std_maxVal, std_minLoc.x, std_minLoc.y, std_maxLoc.x, std_maxLoc.y);
+		FILE *fp;
+		fp = fopen("std_MinMaxValue.txt", "w");
+		if (fp != NULL)
+			fprintf(fp, "std_minVal=%.3f, std_maxVal=%.3f,std_minLoc=(x=%d,y=%d),std_maxLoc=(x=%d,y=%d)\n",
+				std_minVal, std_maxVal, std_minLoc.x, std_minLoc.y, std_maxLoc.x, std_maxLoc.y);
+		fclose(fp);
 		//printf("mean_minVal=%.3f, mean_maxVal=%.3f,mean_minLoc=(x=%d,y=%d),mean_maxLoc=(x=%d,y=%d)\n",
 		//	mean_minVal, mean_maxVal, mean_minLoc.x, mean_minLoc.y, mean_maxLoc.x, mean_maxLoc.y);
 
+		//(b)
+		fout.open("depth_std.txt", ios::out | ios::trunc);
+		fout << roi_std;
+		//fout << "roi_mean:\n" << endl << roi_mean << endl;
+		fout.close();
+
+		//(a)
+		fout.open("cropped_Image.txt", ios::out | ios::trunc);
+		fout << myGui.rois[0];
+		fout.close();
+		imwrite("cropped_Image.bmp", myGui.rois[0]);
+
 		cv::imshow(myGui.std_win_name, roi_std);
 		cv::imshow(myGui.mean_win_name, roi_mean);
+		
 		////////////////////////////////////////////////////
 		//(c) mean and std of roi_std
 		Mat tmp_m, tmp_sd;
@@ -113,18 +137,28 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		m = tmp_m.at<double>(0, 0);
 		sd = tmp_sd.at<double>(0, 0);
 		cout << "(c) Mean: " << m << " , StdDev: " << sd << endl;
+		fout.open("std_mean&variance.txt", ios::out | ios::trunc);
+		fout << "Mean and std of of the 2D array of standard deviation:" << endl;
+		fout<< "(c) Mean: " << m << " , StdDev: " << sd << endl;
+		fout.close();
 		//////////////////////////////////////////////
 		// (d)
 		Mat std_8bit, mean_8bit;
 		printf("quantize roi\n");
 		quantization(roi_std, std_8bit);
 		cv::imshow(myGui.qtstd_win_name, std_8bit);
+		imwrite("std_8bit.bmp", std_8bit);
+		fout.open("std_8bit.txt", ios::out | ios::trunc);
+		fout << std_8bit << endl;
+		fout.close();
+
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
 		//(f)
 		string win_name = "roi std :histogram";
 		//draw_hist2(std_8bit, win_name);
-		draw_hist(std_8bit, win_name);
+		imwrite("histogram_std_8bit.bmp",draw_hist(std_8bit, win_name));
+		
 
 		////////////////////////////////////////////////////
 		//(c) mean and std of roi_std
@@ -134,6 +168,10 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		m = tmp_m.at<double>(0, 0);
 		sd = tmp_sd.at<double>(0, 0);
 		cout << "(c) quantization Mean: " << m << " , StdDev: " << sd << endl;
+		fout.open("std_mean&variance.txt", ios::out | ios::app);
+		fout << "Mean and std of quantilized 8-bit standard deviation image:" << endl;
+		fout << "(c) Mean: " << m << " , StdDev: " << sd << endl;
+		fout.close();
 		//////////////////////////////////////////////
 
 		//quantization(roi_mean, mean_8bit);
@@ -145,10 +183,14 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		Mat std_8bit_he, mean_8bit_he;
 		cv::equalizeHist(std_8bit, std_8bit_he);
 		cv::imshow(myGui.qthe_std_win_name, std_8bit_he);
-		win_name = "roi std : histogram EQ";
+		imwrite("std_8bit_equlized.bmp", std_8bit_he);
+		fout.open("std_8bit_equlized.txt", ios::out|ios::trunc);
+		fout << std_8bit_he << endl;
+		fout.close();
 		//(f)
 		//draw_hist2(std_8bit_he, win_name);
-		draw_hist(std_8bit_he, win_name);
+		win_name = "roi std : histogram EQ";
+		imwrite("histogram_std_8bit_equlized.bmp", draw_hist(std_8bit_he, win_name));
 
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);

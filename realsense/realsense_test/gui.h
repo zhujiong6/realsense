@@ -49,7 +49,7 @@ void SplitFilename(const string& str, string &folder, string &file);
 * hist_table[] : histogram table
 * h_size : level of histogram table, ie, 256 grey levels
 */
-void draw_hist(unsigned *hist_table, int h_size, const string &win_name,
+Mat draw_hist(unsigned *hist_table, int h_size, const string &win_name,
 	int wx = 300, int wy = 300, int flag = CV_WINDOW_AUTOSIZE, Scalar color = Scalar(255, 0, 0)
 );
 
@@ -58,7 +58,7 @@ int h_size : usually 256 for 8 bit
 win_name : the window name
 Mat &image: the image to show its histogram
 */
-void draw_hist(Mat &image, const string &win_name, int h_size=(MAX_GREY_LEVEL+1), int flag = CV_WINDOW_NORMAL,
+Mat draw_hist(Mat &image, const string &win_name, int h_size=(MAX_GREY_LEVEL+1), int flag = CV_WINDOW_NORMAL,
 	Scalar color = Scalar(255, 0, 0));
 
 void draw_hist2(Mat& image, const string &win_name, int h_size = (MAX_GREY_LEVEL + 1));

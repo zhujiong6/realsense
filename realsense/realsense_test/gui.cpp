@@ -173,7 +173,7 @@ void SplitFilename(const string& str, string &folder, string &file)
 */
 //draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 //	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
-void draw_hist(unsigned *hist_table, int h_size, const string &win_name, int wx, int wy,
+Mat draw_hist(unsigned *hist_table, int h_size, const string &win_name, int wx, int wy,
 	int flag, Scalar color)
 {
 	float ht[MAX_GREY_LEVEL];
@@ -198,6 +198,7 @@ void draw_hist(unsigned *hist_table, int h_size, const string &win_name, int wx,
 	cv::namedWindow(win_name, flag);
 	cv::moveWindow(win_name, wx, wy);
 	cv::imshow(win_name, histImage);
+	return histImage;
 }
 
 /*
@@ -206,7 +207,7 @@ win_name : the window name
 Mat &image: the image to show its histogram
 curved histogram
 */
-void draw_hist(Mat &image, const string &win_name, int h_size, int flag, Scalar color)
+Mat draw_hist(Mat &image, const string &win_name, int h_size, int flag, Scalar color)
 {
 	// Initialize parameters
 	int histSize = h_size;    // bin size
@@ -243,7 +244,7 @@ void draw_hist(Mat &image, const string &win_name, int h_size, int flag, Scalar 
 
 	cv::namedWindow(win_name, flag);
 	cv::imshow(win_name, histImage);
-
+	return histImage;
 }
 
 /*
