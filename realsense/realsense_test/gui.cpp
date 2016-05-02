@@ -63,7 +63,7 @@ void onMouse(int event, int x, int y, int flag, void* param) {
 		//Mat &Imagex = gui.
 		//cvReleaseImage(&Image);
 		//Image = cvCloneImage(Imagex);//cvCopy(Imagex, Image, 0);
-		Mat Image = gui.image.clone();
+		Mat Image = gui.image.clone();//cloning the image for later process
 		int thickness = 1;
 		int lineType = 8;
 		int shift = 0;
@@ -98,11 +98,11 @@ void onMouse(int event, int x, int y, int flag, void* param) {
 			//gui.rois = new cv::Mat(3, sizes, CV_16UC1, 0);
 			gui.rois = new cv::Mat[gui.roi_no];
 
-			cv::rectangle(Image, preV1, VertexThree, Scalar(255, 255, 255), thickness, lineType, shift);
+			cv::rectangle(gui.image, preV1, VertexThree, Scalar(255, 255, 255), thickness, lineType, shift);
 		}
 		else
-			cv::rectangle(Image, VertexOne, VertexThree, Scalar(200, 200, 200), thickness, lineType, shift);
-		cv::imshow(win_name, Image);
+			cv::rectangle(gui.image, VertexOne, VertexThree, Scalar(200, 200, 200), thickness, lineType, shift);
+		cv::imshow(win_name, gui.image);
 	}
 	printf("VertexOne( %d, %d) ", VertexOne.x, VertexOne.y);
 	printf("VertexThree( %d, %d)\n", VertexThree.x, VertexThree.y);
