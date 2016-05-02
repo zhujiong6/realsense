@@ -38,7 +38,7 @@ void quantization(Mat &src, Mat &dst)
 	Point minLoc, maxLoc;
 	cv::minMaxLoc(src, &minVal, &maxVal, &minLoc, &maxLoc);
 	
-	printf("minVal=%.3f, maxVal=%.3f,minLoc=(x=%d,y=%d),maxLoc=(x=%d,y=%d)\n",
+	printf("%s:minVal=%.3f, maxVal=%.3f,minLoc=(x=%d,y=%d),maxLoc=(x=%d,y=%d)\n",__func__,
 		minVal, maxVal, minLoc.x, minLoc.y, maxLoc.x, maxLoc.y);
 
 	dst.create(src.rows,src.cols,CV_8UC1);
@@ -58,12 +58,12 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		myGui.rois[myGui.frames]= roi.clone();
 		char prg_str[80];
 		sprintf_s(prg_str,"%d/%d", myGui.frames+1, myGui.roi_no);
-		cv::putText(roi, prg_str, Point(10,40), FONT_HERSHEY_DUPLEX, 1, cv::Scalar(255, 255, 255));
-		cv::imshow(myGui.crop_win_name, myGui.rois[myGui.frames]);
-		//cv::imshow(myGui.crop_win_name, roi);
+		cv::putText(roi, prg_str, Point(10,15), FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255));
+		//cv::imshow(myGui.crop_win_name, myGui.rois[myGui.frames]);
+		cv::imshow(myGui.crop_win_name, roi);
 		cout << '.';
 		myGui.frames++;
-		printf("insert : %d/%d\n", myGui.frames, myGui.roi_no);
+		//printf("insert : %d/%d\n", myGui.frames, myGui.roi_no);
 		
 	}
 	//cout << endl;
@@ -102,11 +102,11 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		double std_minVal, std_maxVal, mean_minVal, mean_maxVal;
 		Point std_minLoc, std_maxLoc, mean_minLoc, mean_maxLoc;
 		cv::minMaxLoc(roi_std, &std_minVal, &std_maxVal, &std_minLoc, &std_maxLoc);
-		cv::minMaxLoc(roi_mean, &mean_minVal, &mean_maxVal, &mean_minLoc, &mean_maxLoc);
+		//cv::minMaxLoc(roi_mean, &mean_minVal, &mean_maxVal, &mean_minLoc, &mean_maxLoc);
 		printf("std_minVal=%.3f, std_maxVal=%.3f,std_minLoc=(x=%d,y=%d),std_maxLoc=(x=%d,y=%d)\n",
 			std_minVal, std_maxVal, std_minLoc.x, std_minLoc.y, std_maxLoc.x, std_maxLoc.y);
-		printf("mean_minVal=%.3f, mean_maxVal=%.3f,mean_minLoc=(x=%d,y=%d),mean_maxLoc=(x=%d,y=%d)\n",
-			mean_minVal, mean_maxVal, mean_minLoc.x, mean_minLoc.y, mean_maxLoc.x, mean_maxLoc.y);
+		//printf("mean_minVal=%.3f, mean_maxVal=%.3f,mean_minLoc=(x=%d,y=%d),mean_maxLoc=(x=%d,y=%d)\n",
+		//	mean_minVal, mean_maxVal, mean_minLoc.x, mean_minLoc.y, mean_maxLoc.x, mean_maxLoc.y);
 
 		
 		fout.open("resultSummary.txt", ios::out | ios::trunc);
@@ -135,6 +135,7 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		//////////////////////////////////////////////
 		// (d)
 		Mat std_8bit, mean_8bit;
+		printf("quantize roi\n");
 		quantization(roi_std, std_8bit);
 		cv::imshow(myGui.qtstd_win_name, std_8bit);
 		imwrite("std_8bit.bmp", std_8bit);
@@ -160,8 +161,8 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		cout << "(c) quantization Mean: " << m << " , StdDev: " << sd << endl;
 		//////////////////////////////////////////////
 
-		quantization(roi_mean, mean_8bit);
-		cv::imshow(myGui.qtmean_win_name, mean_8bit);
+		//quantization(roi_mean, mean_8bit);
+		//cv::imshow(myGui.qtmean_win_name, mean_8bit);
 
 		/////////////////////////////////////////////////
 		//(e)
@@ -180,8 +181,8 @@ void hw4(my_gui &myGui, Mat &depthMat)
 
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
-		cv::equalizeHist(mean_8bit, mean_8bit_he);
-		cv::imshow(myGui.qthe_mean_win_name, mean_8bit_he);
+		//cv::equalizeHist(mean_8bit, mean_8bit_he);
+		//cv::imshow(myGui.qthe_mean_win_name, mean_8bit_he);
 
 		//free rois buffer
 		printf("free myGui.rois[k] and myGui.rois\n");

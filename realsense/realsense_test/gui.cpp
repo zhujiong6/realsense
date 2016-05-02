@@ -135,12 +135,12 @@ void myGui_init(my_gui &myGui)
 	namedWindow(myGui.mean_win_name, WINDOW_NORMAL);
 	myGui.qtstd_win_name = "std quantization of roi";//quantization
 	namedWindow(myGui.qtstd_win_name, WINDOW_NORMAL);
-	myGui.qtmean_win_name = "mean quantization of roi";//quantization
-	namedWindow(myGui.qtmean_win_name, WINDOW_NORMAL);
+	//myGui.qtmean_win_name = "mean quantization of roi";//quantization
+	//namedWindow(myGui.qtmean_win_name, WINDOW_NORMAL);
 	myGui.qthe_std_win_name = "HE of std quantization roi";//Histogram equalization of quantization
 	namedWindow(myGui.qthe_std_win_name, WINDOW_NORMAL);
-	myGui.qthe_mean_win_name = "HE of mean quantization roi";//Histogram equalization of quantization
-	namedWindow(myGui.qthe_mean_win_name, WINDOW_NORMAL);
+	//myGui.qthe_mean_win_name = "HE of mean quantization roi";//Histogram equalization of quantization
+	//namedWindow(myGui.qthe_mean_win_name, WINDOW_NORMAL);
 	////////////////////////////////////////////////////////
 }
 
@@ -224,7 +224,7 @@ Mat draw_hist(Mat &image, const string &win_name, int h_size, int flag, Scalar c
 	for (int h = 0; h < histSize; h++)
 	{
 		float binVal = hist.at<float>(h);
-		cout << " " << binVal;
+		//cout << " " << binVal;
 	}
 
 	// Plot the histogram
