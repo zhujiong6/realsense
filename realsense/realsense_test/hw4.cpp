@@ -169,7 +169,7 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		sd = tmp_sd.at<double>(0, 0);
 		cout << "(c) quantization Mean: " << m << " , StdDev: " << sd << endl;
 		fout.open("std_mean&variance.txt", ios::out | ios::app);
-		fout << "Mean and std of quantilized 8-bit standard deviation image:" << endl;
+		fout << "Mean and std of quantized 8-bit standard deviation image:" << endl;
 		fout << "(c) Mean: " << m << " , StdDev: " << sd << endl;
 		fout.close();
 		//////////////////////////////////////////////
