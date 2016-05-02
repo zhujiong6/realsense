@@ -112,11 +112,10 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		fout.open("resultSummary.txt", ios::out | ios::trunc);
 		fout.good();
 		fout << "roi_std:\n" << endl << roi_std << endl;
-		fout << "roi_mean:\n" << endl << roi_mean << endl;
+		//fout << "roi_mean:\n" << endl << roi_mean << endl;
 		fout.close();
 
 		//For debug
-
 		fout.open("roisExample.txt", ios::out | ios::trunc);
 		fout << myGui.rois[0];
 		fout.close();
@@ -138,12 +137,14 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		Mat std_8bit, mean_8bit;
 		quantization(roi_std, std_8bit);
 		cv::imshow(myGui.qtstd_win_name, std_8bit);
+		imwrite("std_8bit.bmp", std_8bit);
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
 		//(f)
 		string win_name = "roi std :histogram";
 		//draw_hist2(std_8bit, win_name);
 		draw_hist(std_8bit, win_name);
+		
 
 		////////////////////////////////////////////////////
 		//(c) mean and std of roi_std
@@ -165,9 +166,11 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		cv::equalizeHist(std_8bit, std_8bit_he);
 		cv::imshow(myGui.qthe_std_win_name, std_8bit_he);
 		win_name = "roi std : histogram EQ";
+		imwrite("std_8bit_equlized.bmp", std_8bit_he);
 		//(f)
 		//draw_hist2(std_8bit_he, win_name);
 		draw_hist(std_8bit_he, win_name);
+		
 
 		//draw_hist(hist_tableL, (MAX_GREY_LEVEL + 1), wname_Lhist, WIN_GAP_X + SCR_X_OFFSET,
 		//	WIN_GAP_Y * 2 + SCR_Y_OFFSET, cvFlag);
