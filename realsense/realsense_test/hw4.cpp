@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <conio.h>
+#include <fstream>
 
 #include "realsense2cvmat.h"
 
@@ -49,6 +50,9 @@ void quantization(Mat &src, Mat &dst)
 
 void hw4(my_gui &myGui, Mat &depthMat)
 {
+
+	ofstream fout;
+
 	if (myGui.action && (myGui.frames < myGui.roi_no)) {
 		Mat roi(depthMat, myGui.rect); // using a rectangle ROI
 		myGui.rois[myGui.frames]= roi.clone();
@@ -70,6 +74,7 @@ void hw4(my_gui &myGui, Mat &depthMat)
 
 		Mat roi_std(myGui.rect.height, myGui.rect.width, CV_32F);
 		Mat roi_mean(myGui.rect.height, myGui.rect.width, CV_32F);
+		
 		for(int i = 0; i < myGui.rect.height;i++)
 			for (int j = 0; j < myGui.rect.width;j++) {
 				//unsigned short *pixel_vec= new unsigned short[myGui.roi_no];
@@ -103,8 +108,23 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		printf("mean_minVal=%.3f, mean_maxVal=%.3f,mean_minLoc=(x=%d,y=%d),mean_maxLoc=(x=%d,y=%d)\n",
 			mean_minVal, mean_maxVal, mean_minLoc.x, mean_minLoc.y, mean_maxLoc.x, mean_maxLoc.y);
 
+		
+		fout.open("resultSummary.txt", ios::out | ios::trunc);
+		fout.good();
+		fout << "roi_std:\n" << endl << roi_std << endl;
+		fout << "roi_mean:\n" << endl << roi_mean << endl;
+		fout.close();
+
+		//For debug
+
+		fout.open("roisExample.txt", ios::out | ios::trunc);
+		fout << myGui.rois[0];
+		fout.close();
+
+
 		cv::imshow(myGui.std_win_name, roi_std);
 		cv::imshow(myGui.mean_win_name, roi_mean);
+		
 		////////////////////////////////////////////////////
 		//(c) mean and std of roi_std
 		Mat tmp_m, tmp_sd;
