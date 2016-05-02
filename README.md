@@ -42,11 +42,16 @@ input lib : libpxcmd_d.lib libpxc_d.lib libpxcutils_d.lib libpxcutilsmd_d.lib
 5. left click mouse button to setup upper left corner of ROI.
 6. right click mouse button to setup lower right corner of ROI.
 7. double click left mouse button ro middle mouse button to start the hw4.
-8. Wait till 300 frames pass
+8. Wait till 300 frames
+
 # ================================================ #
 # Appendix: source code lists #
 # ================================================ #
-
+1. hw4.cpp : the program to solve homework#4
+2. gui.cpp, gui.h : gui related codes
+3. camera_viewer.cpp:main program to capture intel realsense cameras.
+4.realsense2cvmat.cpp, realsense2cvmat.h: intel realsense camera image converter to opencv matrix.
+# ================================================ #
 # some useful command lines #
 -listio
 -nframes: total frames to capture
