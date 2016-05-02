@@ -39,9 +39,9 @@ input lib : libpxcmd_d.lib libpxc_d.lib libpxcutils_d.lib libpxcutilsmd_d.lib
 2. set up active project to "realsense_test"  
 3. rebuild  
 4. run   
-5. left click mouse button to setup upper left corner of ROI.  
-6. right click mouse button to setup lower right corner of ROI.  
-7. double click left mouse button ro middle mouse button to start the hw4.  
+5. left click mouse button in the depth camera window to setup upper left corner of ROI.  
+6. right click mouse button in the depth camera window to setup lower right corner of ROI.  
+7. double click left mouse button or the middle mouse button in the depth camera window  to start the hw4.  
 8. Wait till 300 frames are captured.
 
 ***注意：每次運行會清空前一次輸出的文件！因此如有需要請手動保存輸出文件~  
