@@ -59,8 +59,8 @@ void hw4(my_gui &myGui, Mat &depthMat)
 		char prg_str[80];
 		sprintf_s(prg_str,"%d/%d", myGui.frames+1, myGui.roi_no);
 		cv::putText(roi, prg_str, Point(10,40), FONT_HERSHEY_DUPLEX, 1, cv::Scalar(255, 255, 255));
-		//cv::imshow(myGui.crop_win_name, myGui.rois[myGui.frames]);
-		cv::imshow(myGui.crop_win_name, roi);
+		cv::imshow(myGui.crop_win_name, myGui.rois[myGui.frames]);
+		//cv::imshow(myGui.crop_win_name, roi);
 		cout << '.';
 		myGui.frames++;
 		printf("insert : %d/%d\n", myGui.frames, myGui.roi_no);

@@ -171,8 +171,8 @@ int wmain(int argc, WCHAR* argv[]) {
 							int thickness = 1;
 							int lineType = 8;
 							int shift = 0;
-							cv::rectangle(depthMat, myGui.rect, Scalar(255, 255, 255), thickness, lineType, shift);
-							cv::imshow(myGui.depth_win_name, depthMat);
+							//cv::rectangle(depthMat, myGui.rect, Scalar(255, 255, 255), thickness, lineType, shift);
+							//cv::imshow(myGui.depth_win_name, depthMat);
 							//insert the roi
 							hw4(myGui, depthMat);
 							/*
