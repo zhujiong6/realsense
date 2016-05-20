@@ -11,10 +11,113 @@ RealSense::RealSense() {}
 
 RealSense::~RealSense() {}
 
-void RealSense::init()
+pxcStatus RealSense::init(int mirror=1)
 {
+	/* 1. Creates an instance of the PXCSenseManager */
+	PXCSenseManager *pp = PXCSenseManager::CreateInstance();
+	if (!pp) {
+		wprintf_s(L"Unable to create the SenseManager\n");
+		return 3;
+	}
 
-	
+	PXCSession::ImplVersion mRSversion = pp->QuerySession()->QueryVersion();
+	std::cout << "SDK Version:" << version.major << "." << version.minor << std::endl;
+
+	/* Collects command line arguments */
+	UtilCmdLine cmdl(pp->QuerySession());
+	if (!cmdl.Parse(L"-listio-nframes-sdname-csize-dsize-isize-lsize-rsize-file-record-noRender-mirror", argc, argv)) return 3;
+
+	/* Sets file recording or playback */
+	PXCCaptureManager *cm = pp->QueryCaptureManager();
+	cm->SetFileName(cmdl.m_recordedFile, cmdl.m_bRecord);
+	if (cmdl.m_sdname) cm->FilterByDeviceInfo(cmdl.m_sdname, 0, 0);
+
+#if	OPENCV_SUPPORTED
+	PXCImage *colorIm, *depthIm, *irIm, *rightIm, *leftIm;
+#else
+	// Create stream renders
+	UtilRender renderc(L"Color"), renderd(L"Depth"), renderi(L"IR"), renderr(L"Right"), renderl(L"Left");
+#endif
+	pxcStatus sts;
+
+	//////////////////////////////////////////////
+	// my gui init
+	//////////////////////////////////////////////
+	my_gui myGui;
+	myGui_init(myGui);
+	////////////////////////////////////////////////////////
+	do {
+		//2. enable realsense camera streams
+		/* Apply command line arguments */
+		pxcBool revert = false;
+		if (cmdl.m_csize.size()>0) {
+			pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, cmdl.m_csize.front().first.width, cmdl.m_csize.front().first.height, (pxcF32)cmdl.m_csize.front().second);
+		}
+		if (cmdl.m_dsize.size()>0) {
+			pp->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, cmdl.m_dsize.front().first.width, cmdl.m_dsize.front().first.height, (pxcF32)cmdl.m_dsize.front().second);
+		}
+		if (cmdl.m_isize.size() > 0) {
+			pp->EnableStream(PXCCapture::STREAM_TYPE_IR, cmdl.m_isize.front().first.width, cmdl.m_isize.front().first.height, (pxcF32)cmdl.m_isize.front().second);
+		}
+		if (cmdl.m_rsize.size() > 0) {
+			pp->EnableStream(PXCCapture::STREAM_TYPE_RIGHT, cmdl.m_rsize.front().first.width, cmdl.m_rsize.front().first.height, (pxcF32)cmdl.m_rsize.front().second);
+		}
+		if (cmdl.m_lsize.size() > 0) {
+			pp->EnableStream(PXCCapture::STREAM_TYPE_LEFT, cmdl.m_lsize.front().first.width, cmdl.m_lsize.front().first.height, (pxcF32)cmdl.m_lsize.front().second);
+		}
+		if (cmdl.m_csize.size() == 0 && cmdl.m_dsize.size() == 0 && cmdl.m_isize.size() == 0 && cmdl.m_rsize.size() == 0 && cmdl.m_lsize.size() == 0) {
+#if 1
+			pp->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, FRAME_WIDTH, FRAME_HEIGHT, (pxcF32)IMAGE_FPS);
+			pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, FRAME_WIDTH, FRAME_HEIGHT, (pxcF32)IMAGE_FPS);
+#else
+			PXCVideoModule::DataDesc desc = {};
+			if (cm->QueryCapture()) {
+				cm->QueryCapture()->QueryDeviceInfo(0, &desc.deviceInfo);
+			}
+			else {
+				desc.deviceInfo.streams = PXCCapture::STREAM_TYPE_COLOR | PXCCapture::STREAM_TYPE_DEPTH;
+				revert = true;
+			}
+			pp->EnableStreams(&desc);
+#endif
+		}
+		// 3. Set the coordinate system
+		PXCSession *session = pp->QuerySession();
+		session->SetCoordinateSystem(PXCSession::COORDINATE_SYSTEM_FRONT_DEFAULT /*COORDINATE_SYSTEM_REAR_OPENCV*/);
+
+		/* 4. Initializes the pipeline */
+		sts = pp->Init();
+		if (sts<PXC_STATUS_NO_ERROR) {
+			if (revert) {
+				/* Enable a single stream */
+				pp->Close();
+				pp->EnableStream(PXCCapture::STREAM_TYPE_DEPTH);
+				sts = pp->Init();
+				if (sts<PXC_STATUS_NO_ERROR) {
+					pp->Close();
+					pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR);
+					sts = pp->Init();
+				}
+			}
+			if (sts<PXC_STATUS_NO_ERROR) {
+				wprintf_s(L"Failed to locate any video stream(s)\n");
+				pp->Release();
+				return sts;
+			}
+		}
+
+		/* Reset all properties */
+		PXCCapture::Device *device = pp->QueryCaptureManager()->QueryDevice();
+		device->ResetProperties(PXCCapture::STREAM_TYPE_ANY);
+
+		/* Set mirror mode */
+		if (cmdl.m_bMirror) {
+			device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_HORIZONTAL);
+		}
+		else {
+			device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_DISABLED);
+		}
+
 }
 
 

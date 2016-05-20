@@ -43,7 +43,7 @@ public:
 
 	RealSense();
 	~RealSense();
-	void init();
+	pxcStatus init(int mirror = 1);
 
 	void startVideoStream(VIDEO_STREAM_MODE mVideoStreamMode = COLOR_DEPTH_MODE);  // �}�� Video Stream
 	void stopVideoStream();  // ���� Video Stream
@@ -56,6 +56,7 @@ public:
 
 
 private:
+	PXCSession::ImplVersion mRSversion;///the version of real sense
 	PXCSenseManager *mPXCSenseManager;
 	int depthValMax;
 	PXCCapture::DeviceInfo mDeviceInfo;
