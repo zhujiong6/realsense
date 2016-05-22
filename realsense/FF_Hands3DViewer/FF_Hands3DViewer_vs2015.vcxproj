@@ -232,6 +232,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\objLoader.cpp" />
+    <ClCompile Include="src\testObj.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\OpenGLView.cpp" />
     <ClCompile Include="src\HandsController.cpp" />
@@ -242,6 +243,7 @@
     <ClCompile Include="src\camera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\objLoader.hpp" />
     <ClInclude Include="include\RssdkHandler.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="include\IView.h" />

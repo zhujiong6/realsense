@@ -1,5 +1,5 @@
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
+#include "objLoader.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -258,7 +258,7 @@ std::string matStream(
 }
 
 int
-main(
+testObj(
   int argc,
   char **argv)
 {
