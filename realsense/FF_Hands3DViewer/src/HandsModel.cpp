@@ -1,3 +1,30 @@
+/*
+The Hand Module consists two separate tracking modes (Full-hand & Extremities) , 
+each designed to solve a different use-case, while the Cursor Module has a single tracking mode.. 
+These modes differ in the information they provide and the computation resources that they require:
+
+¡P Cursor Module ¡V returns a single point on the hand, allowing very accurate and 
+	responsive tracking and a limited set of gestures. The Cursor Module was designed to 
+	solve the hand-based UI control use-case.
+
+¡P Extremities mode (Hand Module) ¡V returns the general location of the hand, its silhouette, 
+	and the extremities of the hand: the hand¡¦s top-most, bottom-most, right-most, left-most, 
+	center and closest (to the sensor) points. This mode was designed to provide a light-weight method 
+	of tracking the user¡¦s hand.
+
+¡P Full-hand mode (Hand Module) ¡V returns the full 3D skeleton of the hand, including all 22 joints, 
+fingers information, gestures, and more. This mode was designed to provide a full set of features 
+for each tracked hand.
+
+While the Hand Module and Cursor Module are the best choice when hand-specific features are required, 
+they are not the only option for incorporating hand tracking into your application. 
+Depending on the requirements of your application, you may wish to use the Blob Module instead.
+If your application requires tracking of any object and not necessarily the hand, 
+you may prefer to use the Blob Module. If you specifically require hand identification and 
+more detailed information such as hand side, joint positions and gesture recognition, 
+you will need to use the Hand Module.
+
+*/
 #include "HandsModel.h"
 #include "pxccursorconfiguration.h"
 
@@ -52,6 +79,8 @@ HandsModel& HandsModel::operator=(const HandsModel& src)
 
 //===========================================================================//
 
+//The Hand Module consists two separate tracking modes(Full - hand & Extremities)
+//Cursor Module has a single tracking mode
 pxcStatus HandsModel::Init(PXCSenseManager* senseManager,bool isFullHand)
 {
 	m_senseManager = senseManager;
@@ -65,6 +94,7 @@ pxcStatus HandsModel::Init(PXCSenseManager* senseManager,bool isFullHand)
 	// Enable hands module in the multi modal pipeline
 	if(m_fullHandMode==false)
 	{
+		//The HandCursorModule interface provides member functions to perform hand cursor tracking and gesture recognition
 		status = senseManager->EnableHandCursor();
 		if(status != PXC_STATUS_NO_ERROR)
 		{
@@ -178,11 +208,11 @@ void HandsModel::update2DImage()
 	// Get camera streams
 	PXCCapture::Sample *sample;
 	if(m_fullHandMode)
-	{
+	{//returns the current images processed by the hand module.
 		sample = (PXCCapture::Sample*)m_senseManager->QueryHandSample();
 	}
 	else
-	{
+	{//returns the current images processed by the hand cursor module
 		sample = (PXCCapture::Sample*)m_senseManager->QueryHandCursorSample();
 	}
 	if(sample && sample->depth)
@@ -314,6 +344,7 @@ bool HandsModel::isModelPaused()
 
 //===========================================================================//
 
+//For all gestures, the user¡¦s hand motion is tracked and ¡§translated¡¨ into cursor motion.
 void HandsModel::updateCursorGestureData()
 {
 	PXCCursorData::GestureData gestureData;

@@ -11,6 +11,19 @@ RssdkHandler* rssdkHandler;
 
 void releaseAll();
 
+/** @brief The Hand Module consists two separate tracking modes (Full-hand & Extremities) , 
+each designed to solve a different use-case, while the Cursor Module has a single tracking mode
+Tracking mode:
+cursor : 2 hands, fast speed, SR300 ¡V 110 cm
+	Cursor point in 2D and 3D, alerts, gestures
+Full Hand : 2 hands, slower hand speed, SR300 ¡V 85 cm
+	Segmentation image, extremity points, hand side, alerts, 
+	joints info, fingers info, openness, gestures
+Extremities : 2 hands, medium hand speed, SR300 ¡V 120 cm
+	Segmentation image, extremity points, hand side, alerts
+
+command line  : -full , full hand mode
+*/
 int main(int argc, char** argv)
 {
 	bool isFullHand = false;
