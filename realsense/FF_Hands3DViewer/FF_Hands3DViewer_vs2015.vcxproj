@@ -231,6 +231,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\objLoader.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\OpenGLView.cpp" />
     <ClCompile Include="src\HandsController.cpp" />
