@@ -531,32 +531,299 @@ namespace hands_viewer.cs
                     g.DrawEllipse(pen, x - sz2 / 2, y - sz2 / 2, sz2, sz2);
                 }
                 pen.Dispose();
+
+                foreach (PointDraw item in pointdraw)
+                {
+                    int x = (int)item.point.x / scaleFactor;
+                    int y = (int)item.point.y / scaleFactor;
+                    pen = new Pen(item.color, 10.0f);
+                    g.DrawEllipse(pen, x - sz2 / 2, y - sz2 / 2, sz2, sz2);
+                    pen.Dispose();
+                }
+                while (pointdraw.Count > 4)
+                    pointdraw.RemoveAt(0);
+
                 adddataflow(numOfHands, cursorPoints);
 
             }//if cursor mode checked
         }
 
-        System.Media.SoundPlayer strong = new System.Media.SoundPlayer(@"res\strong.wav");
-        System.Media.SoundPlayer weak = new System.Media.SoundPlayer(@"res\weak.wav");
+        static System.Media.SoundPlayer strong = new System.Media.SoundPlayer(@"res\strong.wav");
+        static System.Media.SoundPlayer weak = new System.Media.SoundPlayer(@"res\weak.wav");
 
-        System.Threading.Thread analysisThread=new System.Threading.Thread(new System.Threading.ThreadStart(beatanalysis));
+       System.Threading.Thread analysisThread=new System.Threading.Thread(new System.Threading.ThreadStart(beatanalysis));
+
+        TimePoint top, buttom, left, right;
+
+        struct TimePoint
+        {
+            public System.DateTime timestamp;
+            public PXCMPointF32 point;
+            public TimePoint(PXCMPointF32 p)
+            {
+                timestamp = System.DateTime.Now;
+                point = p;
+            }
+
+            public static implicit operator TimePoint(PXCMPointF32 a)
+            {
+                return new TimePoint(a);
+            }
+        }
+
+        int topsu, buttomsu, leftsu, rightsu;
+        static Queue<FixedPoint> fixedpoint=new Queue<FixedPoint>();
+        struct FixedPoint
+        {
+            public TimePoint point;
+            public Direction direction;
+            public FixedPoint(TimePoint p,Direction dir)
+            {
+                point = p;
+                direction = dir;
+            }
+
+
+        }
+        enum Direction
+        {
+            top,buttom,left,right
+        }
+
+        static bool topupd = true, buttomupd = false, leftupd = false, rightupd = false;
+        static bool toplock=false, buttomlock=false, leftlock=true, rightlock=true;
+        PXCMPointF32 last;
+        static int beat4vote = 0, beat3vote = 0, beat2vote = 0;
+
+        struct PointDraw
+        {
+            public PXCMPointF32 point;
+            public Color color;
+            public PointDraw(PXCMPointF32 p,Color c)
+            {
+                point = p;
+                color = c;
+            }
+        }
+        ArrayList pointdraw = new ArrayList();
+
+        static bool readytostart = false;
+        static double intervalms = 0;
+        public static void init()
+        {
+            Console.WriteLine("Init!");
+            topupd = true; buttomupd = false; leftupd = false; rightupd = false;
+            toplock = false; buttomlock = false; leftlock = true; rightlock = true;
+            dataflow.Clear();
+            fixedpoint.Clear();
+            beat4vote = beat2vote = beat3vote = 0;
+        }
 
         public void adddataflow(int numOfHands, Queue<PXCMPoint3DF32>[] cursorPoints)
         {
+            //坐标系测试，结果发现原点在！右上角！
+            //x轴横向，y轴纵向
+            //pointdraw.Add(new PointDraw(new PXCMPointF32(100, 50), Color.Blue));
+            //pointdraw.Add(new PointDraw(new PXCMPointF32(300, 200), Color.Yellow));
+            if (analysisThread.ThreadState==System.Threading.ThreadState.Unstarted)
+            {
+                analysisThread.Start();
+                return;
+            }
+            else if(!readytostart)
+            {
+                return;
+            }
+
             int n = cursorPoints[currentHand].Count();
             if (currentHand < numOfHands && n != 0)
             {
                 Queue<PXCMPoint3DF32> queue = cursorPoints[currentHand];
-                dataflow.Enqueue(queue.Last());
-                if (analysisThread.ThreadState==System.Threading.ThreadState.Unstarted)
+                PXCMPointF32 current = reducedepth(queue.Last());
+                const int leftbuttom_devide= 50;
+                dataflow.Enqueue(current);
+                //第一个点初始化为最上端点
+                if(dataflow.Count==1)
                 {
-                    analysisThread.Start();
+                    top = buttom = left = right = new TimePoint(dataflow.Last());
+                    last = current;
                 }
-                else if(analysisThread.ThreadState==System.Threading.ThreadState.Stopped)
+                else
                 {
-                    analysisThread=new System.Threading.Thread(new System.Threading.ThreadStart(beatanalysis));
-                    analysisThread.Start();
+                    if (getnorm(subtract(current,last))<10)
+                        return;
+
+                    if (current.y > buttom.point.y && !buttomlock) //往下
+                    {
+                        buttomupd = true;
+                        buttom = current;
+                        buttomsu = 0;
+                    }
+                    else
+                    {
+                        if (buttomupd && !buttomlock)
+                            buttomsu += 1;
+                        if (buttomsu == 5 && Math.Abs(buttom.point.x-top.point.x) < leftbuttom_devide)
+                        {
+                            fixedpoint.Enqueue(new FixedPoint(buttom, Direction.buttom));
+                            Console.WriteLine("Buttom");
+                            pointdraw.Add(new PointDraw(buttom.point, Color.Yellow));
+                            buttomlock = true;
+                            last = buttom.point;
+                            if (buttomlock&&leftlock)
+                            {
+                                rightlock = false;
+                                right = last;
+                            }
+                            buttomsu++;
+                        }
+                        else if (Math.Abs(buttom.point.x - top.point.x) > leftbuttom_devide)
+                        {
+                            buttomsu = 0;
+                        }
+                    }
+                    if (current.x < right.point.x && !rightlock) //往右
+                    {
+                        rightupd = true;
+                        right = current;
+                        rightsu = 0;
+                    }
+                    else
+                    {
+                        if (rightupd && !rightlock)
+                            rightsu += 1;
+                        if (rightsu == 5)
+                        {
+                            rightlock = true;
+                            fixedpoint.Enqueue(new FixedPoint(right, Direction.right));
+                            pointdraw.Add(new PointDraw(right.point, Color.Blue));
+                            Console.WriteLine("right");
+                            toplock = false;
+                            buttomlock = true;
+                            last = right.point;
+                            top = last;
+                            rightsu++;
+                        }
+                    }
+                    if (current.y < top.point.y && !toplock)
+                    {
+                        topupd = true;
+                        top = current;
+                        topsu = 0;
+                    }
+                    else
+                    {
+                        if(topupd && !toplock)
+                            topsu += 1;
+                        if (topsu == 5)
+                        {
+                            toplock = true;
+                            fixedpoint.Enqueue(new FixedPoint(top, Direction.top));
+                            pointdraw.Add(new PointDraw(top.point, Color.Red));
+                            Console.WriteLine("top");
+                            last = top.point;
+                            leftlock = buttomlock = false;
+                            left = buttom = last;
+                            topsu++;
+                        }
+                            
+                    }
+                    if (current.x > left.point.x && !leftlock)
+                    {
+                        leftupd = true;
+                        left = current;
+                        leftsu = 0;
+                    }
+                    else
+                    {
+                        if(leftupd && !leftlock )
+                            leftsu += 1;
+                        if (leftsu == 5 && Math.Abs(left.point.x - top.point.x) > leftbuttom_devide)
+                        {
+                            leftlock = true;
+                            fixedpoint.Enqueue(new FixedPoint(left, Direction.left));
+                            pointdraw.Add(new PointDraw(left.point, Color.Green));
+                            rightlock = false;
+                            Console.WriteLine("left");
+                            last = left.point;
+                            right = last;
+                            leftsu++;
+                        }
+                        else if (Math.Abs(left.point.x - top.point.x) < leftbuttom_devide)
+                            leftsu = 0;
+                    }
+
+                    while (fixedpoint.Count>0 && fixedpoint.First().direction != Direction.top)
+                        fixedpoint.Dequeue();
+
+                    if (fixedpoint.Count>=3)
+                    {
+                        string pattern = "";
+                        foreach (FixedPoint item in fixedpoint)
+                        {
+                            if (item.direction == Direction.top)
+                            {
+                                pattern += "T";
+                            }
+                            else if (item.direction == Direction.buttom)
+                            {
+                                pattern += "B";
+                            }
+                            if (item.direction == Direction.left)
+                            {
+                                pattern += "L";
+                            }
+                            if (item.direction == Direction.right)
+                            {
+                                pattern += "R";
+                            }
+                        }
+
+                        if (pattern=="TBLR")
+                        {
+                            beat4vote += 1;
+                        }
+
+                        if (pattern=="TLR")
+                        {
+                            beat3vote += 1;
+                        }
+
+                        if (beat4vote>=beat3vote&& beat4vote>=beat2vote && pattern=="TBLR")
+                        {
+                            TimeSpan interval = new TimeSpan();
+                            for (int i=1;i<fixedpoint.Count;i++)
+                            {
+                                interval += fixedpoint.ElementAt(i).point.timestamp - fixedpoint.ElementAt(i-1).point.timestamp;
+                            }
+                            if (intervalms == 0)
+                                intervalms = interval.TotalMilliseconds / 3;
+                            else
+                                intervalms = 0.2 * interval.TotalMilliseconds / 3 + 0.8 * intervalms;
+                            Console.WriteLine(pattern + "  Interval Updated! New interval:" + intervalms);
+                            fixedpoint.Clear();
+                        }
+
+                        if (beat3vote >= beat4vote && beat3vote >= beat2vote && pattern=="TLR")
+                        {
+                            TimeSpan interval = new TimeSpan();
+                            for (int i = 1; i < fixedpoint.Count; i++)
+                            {
+                                interval += fixedpoint.ElementAt(i).point.timestamp - fixedpoint.ElementAt(i - 1).point.timestamp;
+                            }
+                            if (intervalms == 0)
+                                intervalms = interval.TotalMilliseconds / 2;
+                            else
+                                intervalms = 0.2 * interval.TotalMilliseconds / 2 + 0.8 * intervalms;
+                            Console.WriteLine(pattern + "  Interval Updated! New interval:" + intervalms);
+                            fixedpoint.Clear();
+                        }
+
+                        if (fixedpoint.Count>=4)
+                            fixedpoint.Clear();
+                    }
                 }
+
             }
             else
             {
@@ -570,7 +837,7 @@ namespace hands_viewer.cs
                         maxpointcount = cursorPoints[handptr].Count;
                     }
                 }
-                analysisThread.Abort();
+                //analysisThread.Abort();
                 beatloaction.Clear();
                 dataflow.Clear();
             }
@@ -639,203 +906,150 @@ namespace hands_viewer.cs
 
         static int currentHand = 0;
         static Queue<PXCMPointF32> beatloaction = new Queue<PXCMPointF32>();
-        static Queue<PXCMPoint3DF32> dataflow = new Queue<PXCMPoint3DF32>();
+        static Queue<PXCMPointF32> dataflow = new Queue<PXCMPointF32>();
         static Queue<DataFrame> trace=new Queue<DataFrame>();
 
         static bool analysison = true;
         public static void beatanalysis()
         {
-            try
-            {
-                System.Threading.Thread.Sleep(1000);
-                Console.WriteLine("3");
-                System.Threading.Thread.Sleep(1000);
-                Console.WriteLine("2");
-                System.Threading.Thread.Sleep(1000);
-                Console.WriteLine("1");
-                System.Threading.Thread.Sleep(1000);
-                Console.WriteLine("Go!");
-                dataflow.Clear();
+            System.Threading.Thread.Sleep(1000);
+            Console.WriteLine("3");
+            System.Threading.Thread.Sleep(1000);
+            Console.WriteLine("2");
+            System.Threading.Thread.Sleep(1000);
+            Console.WriteLine("1");
+            System.Threading.Thread.Sleep(1000);
+            Console.WriteLine("Go!");
+            dataflow.Clear();
+            readytostart = true;
 
-                System.IO.StreamWriter output = new System.IO.StreamWriter("velocity.txt");
-                Console.WriteLine("start!");
-                Color color = Color.Red;
-                Pen pen = new Pen(color, 10.0f);
-                float sz = 32;
-                int scaleFactor = 1;
-                int idlecount = 0;
-                Console.WriteLine("Analysis Starting...");
-                while (analysison == true)
+            int flowstopcount = 0;
+            int flowsize = dataflow.Count;
+            int beatcount = 0;
+            while(true)
+            {
+                if (intervalms==0)
+                    System.Threading.Thread.Sleep(3000);
+                else
                 {
-                    int n_flow = dataflow.Count;
-                    int n_trace = trace.Count;
-
-                    //同步当前dataflow的元素到trace中
-                    if (n_flow>n_trace)
+                    if (beat4vote>beat3vote && beat4vote>beat2vote)
                     {
-                        idlecount = 0;
-                        //补入未分析的数据
-                        for (int i=n_trace;i<n_flow;i++)
-                        {
-                            if (trace.Count >= 6)
-                            {
-                                double v1 = trace.ElementAt(trace.Count - 2).v;
-                                double v2 = trace.Last().v;
-                                double v0 = trace.ElementAt(trace.Count - 3).v;
-                                double v01 = trace.ElementAt(trace.Count - 4).v;
-                                double v3 = trace.ElementAt(trace.Count - 1).v;
-                                if (v0 <= v1 && v01 <= v1 && v1>=v2&&v1>=v3)
-                                {
-                                    if (beatloaction.Count == 4) beatloaction.Dequeue();
-                                    beatloaction.Enqueue(trace.ElementAt(trace.Count - 2).loc);
-
-                                }
-
-                            }
-
-
-                            if (trace.Count>=2)
-                            {
-                               
-                                trace.Enqueue(new DataFrame(dataflow.ElementAt(i), trace.Last(), trace.ElementAt(trace.Count - 1)));
-                                //if (trace.ElementAt(i).acc_diff <= 0.5 && Math.Abs(trace.ElementAt(i).vangle - trace.ElementAt(i - 1).vangle) > 160)
-                                //{
-                                //    beatloaction.Enqueue(trace.ElementAt(i).loc);
-                                //    if (beatloaction.Count > 5) beatloaction.Dequeue();
-                                //}
-                            }
-                            else if(trace.Count==1)
-                            {
-                                trace.Enqueue(new DataFrame(dataflow.ElementAt(i), trace.Last()));
-                            }
-                            else
-                            {
-                                trace.Enqueue(new DataFrame(dataflow.ElementAt(i)));
-                            }
-
-                            
-                                
-                        }
-                        Queue<double> diffqueue = new Queue<double>();
-                        //队列分析
-
-                        
-                        if (trace.Count>200 && output!=null)
-                        {
-                            //Console.WriteLine("start!");
-                            for(int i=0;i<100;i++)
-                            {
-                                output.WriteLine(trace.ElementAt(i).v+","+trace.ElementAt(i).acc+","+trace.ElementAt(i).vangle);
-                            }
-                            Console.WriteLine("end!");
-                            output.Close();
-                            output = null;
-                        }
-                       
-                        while(trace.Count>300)
-                        {
-                            trace.Dequeue();
-                            dataflow.Dequeue();
-                        }
+                        if (beatcount % 4 == 0) strong.Play();
+                        else
+                            weak.Play();
+                        beatcount = ++beatcount % 4;
                     }
-                    else
+                    else if (beat3vote > beat4vote && beat3vote > beat2vote)
                     {
-                        System.Threading.Thread.Sleep(100);
-                        idlecount += 50;
-                        if (idlecount==1000)
-                        {
-                            dataflow.Clear();
-                            trace.Clear();
-                            beatloaction.Clear();
-                            idlecount = 0;
-                        }
+                        if (beatcount % 3 == 0) strong.Play();
+                        else
+                            weak.Play();
+                        beatcount = ++beatcount % 3;
                     }
-
+                   // Console.WriteLine((int)intervalms);
+                    System.Threading.Thread.Sleep((int)intervalms);
                 }
-            }
-            //    int n = cursorPoints[currentHand].Count();
-            //    int count = trace.Count;
-            //    if (currentHand < numOfHands && n != 0)
-            //    {
-            //        Queue<PXCMPoint3DF32> queue = cursorPoints[currentHand];
-            //        if (count >= 2)
-            //        {
-            //            trace.Enqueue(new DataFrame(queue.Last(), trace.Last(), trace.ElementAt(count - 2)));
-            //        }
-            //        else if (count == 1)
-            //        {
-            //            trace.Enqueue(new DataFrame(queue.Last(), trace.Last()));
-            //        }
-            //        else
-            //        {
-            //            trace.Enqueue(new DataFrame(queue.Last()));
-            //        }
-            //    }
-            //    else
-            //    {
-            //        //选择另一只手
-            //        for (int handptr = 0; handptr < numOfHands; handptr++)
-            //        {
-            //            int maxpointcount = 0;
-            //            if (cursorPoints[handptr].Count > maxpointcount)
-            //            {
-            //                currentHand = handptr;
-            //                maxpointcount = cursorPoints[handptr].Count;
-            //            }
-            //        }
-            //        beatloaction.Clear();
-            //    }
-            //}
+                if (dataflow.Count == flowsize)
+                {
+                    flowstopcount += (intervalms == 0 ? 1000 : (int)intervalms);
+                }                
+                else
+                {
+                    flowsize = dataflow.Count;
+                    flowstopcount = 0;
+                }
 
-            //float sumx = 0,sumy=0;
-            //int size = 5;
-            //for (int i = 0; i < size ; i++)
-            //{
-            //    sumx += trace.ElementAt(i).loc.x;
-            //    sumy += trace.ElementAt(i).loc.y;
-            //}
-            //PXCMPointF32 average = new PXCMPointF32(sumx / 5, sumy / 5);
-
-            //double diff = 0;
-            //for(int i = 0;i < size;i++)
-            //{
-            //    diff += getnorm(subtract(new PXCMPointF32(trace.ElementAt(i).loc.x, trace.ElementAt(i).loc.y), average));
-            //}
-            //diffqueue.Enqueue(diff);
-            //diff = 0;
-            //for (int i= size;i<trace.Count;i++)
-            //{
-            //    sumx -= trace.ElementAt(i-size).loc.x;
-            //    sumy -= trace.ElementAt(i-size).loc.y;
-            //    sumx += trace.ElementAt(i).loc.x;
-            //    sumy += trace.ElementAt(i).loc.y;
-            //    PXCMPointF32 aver = new PXCMPointF32(sumx / 5, sumy / 5);
-            //    double dif = 0;
-            //    for (int j = i-size+1; j <=i; j++)
-            //    {
-            //        dif += getnorm(subtract(new PXCMPointF32(trace.ElementAt(j).loc.x, trace.ElementAt(j).loc.y), average));
-            //    }
-            //    diffqueue.Enqueue(dif);
-            //}
-
-            //for(int i=2;i<diffqueue.Count - 3;i++)
-            //{
-            //    if(diffqueue.ElementAt(i)<diffqueue.ElementAt(i-1)
-            //        && diffqueue.ElementAt(i) < diffqueue.ElementAt(i - 2)
-            //        && diffqueue.ElementAt(i) < diffqueue.ElementAt(i + 1)
-            //        && diffqueue.ElementAt(i) < diffqueue.ElementAt(i + 2))
-            //    {
-            //        if (beatloaction.Count > 4) beatloaction.Dequeue();
-            //        beatloaction.Enqueue(trace.ElementAt(i + 4).loc);
-            //    }
-            //}
-
-            catch (System.Threading.ThreadAbortException)
-            {
-                Console.WriteLine("Aborting analysis...");
+                if (flowstopcount==3000)
+                {
+                    flowsize = 0;
+                    init();
+                }
+                    
             }
 
         }
+        //{
+        //    try
+        //    {
+        //        System.Threading.Thread.Sleep(1000);
+        //        Console.WriteLine("3");
+        //        System.Threading.Thread.Sleep(1000);
+        //        Console.WriteLine("2");
+        //        System.Threading.Thread.Sleep(1000);
+        //        Console.WriteLine("1");
+        //        System.Threading.Thread.Sleep(1000);
+        //        Console.WriteLine("Go!");
+        //        dataflow.Clear();
+
+        //        System.IO.StreamWriter output = new System.IO.StreamWriter("velocity.txt");
+
+        //        Color color = Color.Red;
+        //        Pen pen = new Pen(color, 10.0f);
+        //        float sz = 32;
+        //        int scaleFactor = 1;
+        //        int idlecount = 0;
+        //        Console.WriteLine("Analysis Starting...");
+        //        while (analysison == true)
+        //        {
+        //            int n_flow = dataflow.Count;
+        //            int n_trace = trace.Count;
+
+        //            //同步当前dataflow的元素到trace中
+        //            if (n_flow>n_trace)
+        //            {
+        //                idlecount = 0;
+        //                //补入未分析的数据
+        //                for (int i=n_trace;i<n_flow;i++)
+        //                {
+        //                    if (trace.Count>=2)
+        //                    {
+        //                        trace.Enqueue(new DataFrame(dataflow.ElementAt(i), trace.Last(), trace.ElementAt(trace.Count - 1)));
+        //                    }
+        //                    else if(trace.Count==1)
+        //                    {
+        //                        trace.Enqueue(new DataFrame(dataflow.ElementAt(i), trace.Last()));
+        //                    }
+        //                    else
+        //                    {
+        //                        trace.Enqueue(new DataFrame(dataflow.ElementAt(i)));
+        //                    }
+
+        //                }
+        //                Queue<double> diffqueue = new Queue<double>();
+
+
+        //                //队列分析
+
+
+
+
+        //                while(trace.Count>100)
+        //                {
+        //                    trace.Dequeue();
+        //                    dataflow.Dequeue();
+        //                }
+        //            }
+        //            else
+        //            {
+        //                System.Threading.Thread.Sleep(100);
+        //                idlecount += 50;
+        //                if (idlecount==1000)
+        //                {
+        //                    dataflow.Clear();
+        //                    trace.Clear();
+        //                    beatloaction.Clear();
+        //                    idlecount = 0;
+        //                }
+        //            }
+
+        //        }
+        //    }
+        //    catch (System.Threading.ThreadAbortException)
+        //    {
+        //        Console.WriteLine("Aborting analysis...");
+        //    }
+
+        //}
 
         public static PXCMPoint3DF32 subtract(PXCMPoint3DF32 left, PXCMPoint3DF32 right)
         {
