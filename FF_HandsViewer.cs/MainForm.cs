@@ -450,6 +450,7 @@ namespace hands_viewer.cs
             }
         }
 
+        const float sz2 = 32;
         public void DisplayCursor(int numOfHands, Queue<PXCMPoint3DF32>[] cursorPoints, Queue<PXCMPoint3DF32>[] adaptivePoints, int[] cursorClick)
         {
             if (bitmap == null) return;
@@ -521,7 +522,7 @@ namespace hands_viewer.cs
                 pen.Dispose();
 
                 pen = new Pen(Color.Red);
-                float sz2 = 32;
+                
                 ///Draw beat point
                 Queue<PXCMPointF32> bldraw = beatloaction;
                 for (int i=0;i<bldraw.Count;i++)
@@ -553,7 +554,7 @@ namespace hands_viewer.cs
 
        System.Threading.Thread analysisThread=new System.Threading.Thread(new System.Threading.ThreadStart(beatanalysis));
 
-        TimePoint top, buttom, left, right;
+        static TimePoint top, buttom, left, right;
 
         struct TimePoint
         {
@@ -605,17 +606,23 @@ namespace hands_viewer.cs
                 color = c;
             }
         }
-        ArrayList pointdraw = new ArrayList();
+        static ArrayList pointdraw = new ArrayList();
 
         static bool readytostart = false;
         static double intervalms = 0;
+        static double volumnrate = 1;
+        static double lastamptitude = 0;
+        static int errorcount = 0;
         public static void init()
         {
             Console.WriteLine("Init!");
             topupd = true; buttomupd = false; leftupd = false; rightupd = false;
             toplock = false; buttomlock = false; leftlock = true; rightlock = true;
+            errorcount = 0;
             dataflow.Clear();
+            pointdraw.Clear();
             fixedpoint.Clear();
+            
             beat4vote = beat2vote = beat3vote = 0;
         }
 
@@ -625,6 +632,7 @@ namespace hands_viewer.cs
             //x轴横向，y轴纵向
             //pointdraw.Add(new PointDraw(new PXCMPointF32(100, 50), Color.Blue));
             //pointdraw.Add(new PointDraw(new PXCMPointF32(300, 200), Color.Yellow));
+            int n = cursorPoints[currentHand].Count();
             if (analysisThread.ThreadState==System.Threading.ThreadState.Unstarted)
             {
                 analysisThread.Start();
@@ -632,16 +640,24 @@ namespace hands_viewer.cs
             }
             else if(!readytostart)
             {
+                if (currentHand < numOfHands && n != 0)
+                {
+                    Queue<PXCMPoint3DF32> queue = cursorPoints[currentHand];
+                    PXCMPointF32 current = reducedepth(queue.Last());
+                    dataflow.Enqueue(current);
+                    if (dataflow.Count > 1)
+                        dataflow.Dequeue();
+                }
                 return;
             }
-
-            int n = cursorPoints[currentHand].Count();
             if (currentHand < numOfHands && n != 0)
             {
                 Queue<PXCMPoint3DF32> queue = cursorPoints[currentHand];
                 PXCMPointF32 current = reducedepth(queue.Last());
                 const int leftbuttom_devide= 50;
                 dataflow.Enqueue(current);
+                if (dataflow.Count > 4)
+                    dataflow.Dequeue();
                 //第一个点初始化为最上端点
                 if(dataflow.Count==1)
                 {
@@ -744,6 +760,7 @@ namespace hands_viewer.cs
                             fixedpoint.Enqueue(new FixedPoint(left, Direction.left));
                             pointdraw.Add(new PointDraw(left.point, Color.Green));
                             rightlock = false;
+                            buttomlock = true;
                             Console.WriteLine("left");
                             last = left.point;
                             right = last;
@@ -789,6 +806,13 @@ namespace hands_viewer.cs
                             beat3vote += 1;
                         }
 
+                        if (pattern=="TBTB")
+                        {
+                            beat2vote += 1;
+                        }
+
+                        const double updrate = 0.2;
+                        const double vupdrate = 0.2;
                         if (beat4vote>=beat3vote&& beat4vote>=beat2vote && pattern=="TBLR")
                         {
                             TimeSpan interval = new TimeSpan();
@@ -799,8 +823,19 @@ namespace hands_viewer.cs
                             if (intervalms == 0)
                                 intervalms = interval.TotalMilliseconds / 3;
                             else
-                                intervalms = 0.2 * interval.TotalMilliseconds / 3 + 0.8 * intervalms;
+                                intervalms = updrate * interval.TotalMilliseconds / 3 + (1-updrate) * intervalms;
                             Console.WriteLine(pattern + "  Interval Updated! New interval:" + intervalms);
+
+                            double amptitude = getnorm(subtract(fixedpoint.ElementAt(1).point.point, fixedpoint.ElementAt(0).point.point));
+                            if (lastamptitude == 0)
+                                lastamptitude = amptitude;
+                            else
+                            {
+                                double ratio = amptitude / lastamptitude;
+                                ratio = (ratio - 1) * vupdrate + ratio;
+                                volumnrate = ratio;
+                                lastamptitude = amptitude;
+                            }
                             fixedpoint.Clear();
                         }
 
@@ -814,9 +849,71 @@ namespace hands_viewer.cs
                             if (intervalms == 0)
                                 intervalms = interval.TotalMilliseconds / 2;
                             else
-                                intervalms = 0.2 * interval.TotalMilliseconds / 2 + 0.8 * intervalms;
+                                intervalms = updrate * interval.TotalMilliseconds / 2 + (1 - updrate) * intervalms;
                             Console.WriteLine(pattern + "  Interval Updated! New interval:" + intervalms);
+
+                            double amptitude = 0;
+                            amptitude += getnorm(subtract(fixedpoint.ElementAt(1).point.point, fixedpoint.ElementAt(0).point.point));
+                            amptitude += getnorm(subtract(fixedpoint.ElementAt(2).point.point, fixedpoint.ElementAt(1).point.point));
+                            amptitude /= 2;
+                            if (lastamptitude == 0)
+                                lastamptitude = amptitude;
+                            else
+                            {
+                                double ratio = amptitude / lastamptitude;
+                                ratio = (ratio - 1) * vupdrate + ratio;
+                                volumnrate = ratio;
+                                lastamptitude = amptitude;
+                            }
+
                             fixedpoint.Clear();
+                        }
+
+                        if (beat2vote>=beat4vote && beat2vote>=beat3vote && pattern=="TBTB")
+                        {
+                            TimeSpan interval = new TimeSpan();
+                            for (int i = 1; i < fixedpoint.Count; i++)
+                            {
+                                interval += fixedpoint.ElementAt(i).point.timestamp - fixedpoint.ElementAt(i - 1).point.timestamp;
+                            }
+                            if (intervalms == 0)
+                                intervalms = interval.TotalMilliseconds / 3;
+                            else
+                                intervalms = updrate * interval.TotalMilliseconds / 3 + (1 - updrate) * intervalms;
+                            Console.WriteLine(pattern + "  Interval Updated! New interval:" + intervalms);
+
+                            double amptitude = 0;
+                            amptitude += getnorm(subtract(fixedpoint.ElementAt(1).point.point, fixedpoint.ElementAt(0).point.point));
+                            amptitude += getnorm(subtract(fixedpoint.ElementAt(2).point.point, fixedpoint.ElementAt(1).point.point));
+                            amptitude += getnorm(subtract(fixedpoint.ElementAt(3).point.point, fixedpoint.ElementAt(2).point.point));
+                            amptitude /= 3;
+                            if (lastamptitude == 0)
+                                lastamptitude = amptitude;
+                            else
+                            {
+                                double ratio = amptitude / lastamptitude;
+                                ratio = (ratio - 1) * vupdrate + ratio;
+                                volumnrate = ratio;
+                                lastamptitude = amptitude;
+                            }
+
+                            fixedpoint.Clear();
+                        }
+
+
+                        if(pattern!="TBTB"&&pattern!="TBLR"&&pattern!="TLR")
+                        {
+                            errorcount++;
+                            if (errorcount>5)
+                            {
+                                readytostart = false;
+                                init();
+                                Console.WriteLine("Move cursor into the orange circle to restart");
+                            }
+                        }
+                        else
+                        {
+                            errorcount = 0;
                         }
 
                         if (fixedpoint.Count>=4)
@@ -838,8 +935,8 @@ namespace hands_viewer.cs
                     }
                 }
                 //analysisThread.Abort();
-                beatloaction.Clear();
-                dataflow.Clear();
+                readytostart = false;
+                init();
             }
         }
 
@@ -926,10 +1023,11 @@ namespace hands_viewer.cs
             int flowstopcount = 0;
             int flowsize = dataflow.Count;
             int beatcount = 0;
+            const int defaultinterval = 500;
             while(true)
             {
                 if (intervalms==0)
-                    System.Threading.Thread.Sleep(3000);
+                    System.Threading.Thread.Sleep(defaultinterval);
                 else
                 {
                     if (beat4vote>beat3vote && beat4vote>beat2vote)
@@ -944,25 +1042,48 @@ namespace hands_viewer.cs
                         if (beatcount % 3 == 0) strong.Play();
                         else
                             weak.Play();
+                        
                         beatcount = ++beatcount % 3;
                     }
+                    else if(beat2vote>beat4vote&&beat2vote>beat3vote)
+                    {
+                        if (beatcount % 2 == 0) strong.Play();
+                        else
+                            weak.Play();
+                        beatcount = ++beatcount % 2;
+                    }
+
                    // Console.WriteLine((int)intervalms);
                     System.Threading.Thread.Sleep((int)intervalms);
                 }
-                if (dataflow.Count == flowsize)
+                if (dataflow.Count == flowsize && readytostart)
                 {
-                    flowstopcount += (intervalms == 0 ? 1000 : (int)intervalms);
+                    flowstopcount += (intervalms == 0 ? defaultinterval : (int)intervalms);
                 }                
-                else
+                else if (readytostart)
                 {
                     flowsize = dataflow.Count;
                     flowstopcount = 0;
+                }
+                else if (!readytostart)
+                {
+                    PXCMPointF32 st = top.point;
+                    pointdraw.Add(new PointDraw(st, Color.Orange));
+                    if (dataflow.Count>=1 && getnorm(subtract(st, dataflow.Last())) < sz2)
+                    {
+                        System.Threading.Thread.Sleep(100);
+                        readytostart = true;
+                        pointdraw.Clear();
+                    }
+                        
                 }
 
                 if (flowstopcount==3000)
                 {
                     flowsize = 0;
                     init();
+                    readytostart = false;
+                    Console.WriteLine("Move cursor into the orange circle to restart");
                 }
                     
             }

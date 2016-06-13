@@ -92,7 +92,7 @@
             // sourceToolStripMenuItem
             // 
             this.sourceToolStripMenuItem.Name = "sourceToolStripMenuItem";
-            this.sourceToolStripMenuItem.Size = new System.Drawing.Size(125, 43);
+            this.sourceToolStripMenuItem.Size = new System.Drawing.Size(125, 48);
             this.sourceToolStripMenuItem.Text = "Device";
             // 
             // MainMenu
@@ -104,7 +104,7 @@
             this.MainMenu.Location = new System.Drawing.Point(0, 0);
             this.MainMenu.Name = "MainMenu";
             this.MainMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
-            this.MainMenu.Size = new System.Drawing.Size(601, 47);
+            this.MainMenu.Size = new System.Drawing.Size(601, 52);
             this.MainMenu.TabIndex = 0;
             this.MainMenu.Text = "MainMenu";
             // 
@@ -115,7 +115,7 @@
             this.Playback,
             this.Record});
             this.modeToolStripMenuItem.Name = "modeToolStripMenuItem";
-            this.modeToolStripMenuItem.Size = new System.Drawing.Size(113, 43);
+            this.modeToolStripMenuItem.Size = new System.Drawing.Size(113, 48);
             this.modeToolStripMenuItem.Text = "Mode";
             // 
             // Live
@@ -123,21 +123,21 @@
             this.Live.Checked = true;
             this.Live.CheckState = System.Windows.Forms.CheckState.Checked;
             this.Live.Name = "Live";
-            this.Live.Size = new System.Drawing.Size(257, 46);
+            this.Live.Size = new System.Drawing.Size(327, 46);
             this.Live.Text = "Live";
             this.Live.Click += new System.EventHandler(this.Live_Click);
             // 
             // Playback
             // 
             this.Playback.Name = "Playback";
-            this.Playback.Size = new System.Drawing.Size(257, 46);
+            this.Playback.Size = new System.Drawing.Size(327, 46);
             this.Playback.Text = "Playback";
             this.Playback.Click += new System.EventHandler(this.Playback_Click);
             // 
             // Record
             // 
             this.Record.Name = "Record";
-            this.Record.Size = new System.Drawing.Size(257, 46);
+            this.Record.Size = new System.Drawing.Size(327, 46);
             this.Record.Text = "Record";
             this.Record.Click += new System.EventHandler(this.Record_Click);
             // 
@@ -235,6 +235,7 @@
             this.cmbGesturesList.Name = "cmbGesturesList";
             this.cmbGesturesList.Size = new System.Drawing.Size(94, 17);
             this.cmbGesturesList.TabIndex = 35;
+            this.cmbGesturesList.Visible = false;
             this.cmbGesturesList.SelectedIndexChanged += new System.EventHandler(this.cmbGesturesList_SelectedIndexChanged);
             // 
             // label2
@@ -246,6 +247,7 @@
             this.label2.Size = new System.Drawing.Size(124, 32);
             this.label2.TabIndex = 38;
             this.label2.Text = "Gesture:";
+            this.label2.Visible = false;
             // 
             // labelFPS
             // 
@@ -289,6 +291,7 @@
             this.ImageGroupBox.TabIndex = 47;
             this.ImageGroupBox.TabStop = false;
             this.ImageGroupBox.Text = "Image";
+            this.ImageGroupBox.Visible = false;
             // 
             // OptionsGroupBox
             // 
@@ -300,6 +303,7 @@
             this.OptionsGroupBox.TabIndex = 48;
             this.OptionsGroupBox.TabStop = false;
             this.OptionsGroupBox.Text = "Options";
+            this.OptionsGroupBox.Visible = false;
             // 
             // TrackingModeGroupBox
             // 
@@ -316,6 +320,7 @@
             this.TrackingModeGroupBox.TabIndex = 49;
             this.TrackingModeGroupBox.TabStop = false;
             this.TrackingModeGroupBox.Text = "Tracking Type";
+            this.TrackingModeGroupBox.Visible = false;
             // 
             // Extremities
             // 
@@ -386,6 +391,7 @@
             this.CursorMode.TabStop = true;
             this.CursorMode.Text = "Cursor Tracking";
             this.CursorMode.UseVisualStyleBackColor = true;
+            this.CursorMode.Visible = false;
             this.CursorMode.CheckedChanged += new System.EventHandler(this.TrackingModeChanged);
             // 
             // Cursor
