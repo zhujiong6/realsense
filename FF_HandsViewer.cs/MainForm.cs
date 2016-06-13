@@ -533,7 +533,8 @@ namespace hands_viewer.cs
                 }
                 pen.Dispose();
 
-                foreach (PointDraw item in pointdraw)
+                ArrayList als = new ArrayList(pointdraw);
+                foreach (PointDraw item in als)
                 {
                     int x = (int)item.point.x / scaleFactor;
                     int y = (int)item.point.y / scaleFactor;
@@ -622,10 +623,32 @@ namespace hands_viewer.cs
             dataflow.Clear();
             pointdraw.Clear();
             fixedpoint.Clear();
-            
-            beat4vote = beat2vote = beat3vote = 0;
+
+           if(beat4vote > beat3vote&&beat4vote>beat2vote)
+            {
+                beat4vote = 1;
+                beat3vote = beat2vote = 0;
+            }
+
+
+            else if (beat2vote > beat3vote && beat2vote > beat4vote)
+            {
+                beat2vote = 2;
+                beat3vote = beat4vote = 0;
+            }
+
+            else if(beat3vote>beat2vote&&beat3vote>beat4vote)
+            {
+                beat3vote = 2;
+                beat2vote = beat4vote = 0;
+            }
+           else
+            {
+                beat4vote = beat3vote = beat2vote = 0;
+            }
         }
 
+        static System.DateTime dataflowupd;
         public void adddataflow(int numOfHands, Queue<PXCMPoint3DF32>[] cursorPoints)
         {
             //坐标系测试，结果发现原点在！右上角！
@@ -654,8 +677,9 @@ namespace hands_viewer.cs
             {
                 Queue<PXCMPoint3DF32> queue = cursorPoints[currentHand];
                 PXCMPointF32 current = reducedepth(queue.Last());
-                const int leftbuttom_devide= 50;
+                const int leftbuttom_devide= 100;
                 dataflow.Enqueue(current);
+                dataflowupd = System.DateTime.Now;
                 if (dataflow.Count > 4)
                     dataflow.Dequeue();
                 //第一个点初始化为最上端点
@@ -685,7 +709,9 @@ namespace hands_viewer.cs
                             Console.WriteLine("Buttom");
                             pointdraw.Add(new PointDraw(buttom.point, Color.Yellow));
                             buttomlock = true;
+                            toplock = false;
                             last = buttom.point;
+                            top = subtract(top.point, new PXCMPointF32(0, -70));
                             if (buttomlock&&leftlock)
                             {
                                 rightlock = false;
@@ -721,6 +747,34 @@ namespace hands_viewer.cs
                             rightsu++;
                         }
                     }
+
+                    if (current.x > left.point.x && !leftlock)
+                    {
+                        leftupd = true;
+                        left = current;
+                        leftsu = 0;
+                    }
+                    else
+                    {
+                        if (leftupd && !leftlock)
+                            leftsu += 1;
+                        if (leftsu == 5 && Math.Abs(left.point.x - top.point.x) > leftbuttom_devide)
+                        {
+                            leftlock = true;
+                            toplock = true;
+                            fixedpoint.Enqueue(new FixedPoint(left, Direction.left));
+                            pointdraw.Add(new PointDraw(left.point, Color.Green));
+                            rightlock = false;
+                            buttomlock = true;
+                            Console.WriteLine("left");
+                            last = left.point;
+                            right = last;
+                            leftsu++;
+                        }
+                        else if (Math.Abs(left.point.x - top.point.x) < leftbuttom_devide)
+                            leftsu = 0;
+                    }
+
                     if (current.y < top.point.y && !toplock)
                     {
                         topupd = true;
@@ -744,31 +798,7 @@ namespace hands_viewer.cs
                         }
                             
                     }
-                    if (current.x > left.point.x && !leftlock)
-                    {
-                        leftupd = true;
-                        left = current;
-                        leftsu = 0;
-                    }
-                    else
-                    {
-                        if(leftupd && !leftlock )
-                            leftsu += 1;
-                        if (leftsu == 5 && Math.Abs(left.point.x - top.point.x) > leftbuttom_devide)
-                        {
-                            leftlock = true;
-                            fixedpoint.Enqueue(new FixedPoint(left, Direction.left));
-                            pointdraw.Add(new PointDraw(left.point, Color.Green));
-                            rightlock = false;
-                            buttomlock = true;
-                            Console.WriteLine("left");
-                            last = left.point;
-                            right = last;
-                            leftsu++;
-                        }
-                        else if (Math.Abs(left.point.x - top.point.x) < leftbuttom_devide)
-                            leftsu = 0;
-                    }
+                    
 
                     while (fixedpoint.Count>0 && fixedpoint.First().direction != Direction.top)
                         fixedpoint.Dequeue();
@@ -798,22 +828,37 @@ namespace hands_viewer.cs
 
                         if (pattern=="TBLR")
                         {
-                            beat4vote += 1;
+                            beat4vote = Math.Min(beat4vote + 1, 5);
+                            if(beat4vote==5)
+                            {
+                                beat3vote = Math.Max(beat3vote - 1, 0);
+                                beat2vote = Math.Max(beat2vote - 1, 0);
+                            }
                         }
 
-                        if (pattern=="TLR")
+                        else if (pattern=="TLR")
                         {
-                            beat3vote += 1;
+                            beat3vote = Math.Min(beat3vote + 1, 5);
+                            if (beat3vote == 5)
+                            {
+                                beat4vote = Math.Max(beat4vote - 1, 0);
+                                beat2vote = Math.Max(beat2vote - 1, 0);
+                            }
                         }
 
-                        if (pattern=="TBTB")
+                        else if (pattern=="TBTB")
                         {
-                            beat2vote += 1;
+                            beat2vote = Math.Min(beat2vote + 1, 5);
+                            if(beat2vote==5)
+                            {
+                                beat3vote = Math.Max(beat3vote - 1, 0);
+                                beat4vote = Math.Max(beat4vote - 1, 0);
+                            }
                         }
 
                         const double updrate = 0.2;
                         const double vupdrate = 0.2;
-                        if (beat4vote>=beat3vote&& beat4vote>=beat2vote && pattern=="TBLR")
+                        if (beat4vote>beat3vote&& beat4vote>beat2vote && pattern=="TBLR")
                         {
                             TimeSpan interval = new TimeSpan();
                             for (int i=1;i<fixedpoint.Count;i++)
@@ -839,7 +884,7 @@ namespace hands_viewer.cs
                             fixedpoint.Clear();
                         }
 
-                        if (beat3vote >= beat4vote && beat3vote >= beat2vote && pattern=="TLR")
+                        if (beat3vote > beat4vote && beat3vote > beat2vote && pattern=="TLR")
                         {
                             TimeSpan interval = new TimeSpan();
                             for (int i = 1; i < fixedpoint.Count; i++)
@@ -866,10 +911,13 @@ namespace hands_viewer.cs
                                 lastamptitude = amptitude;
                             }
 
-                            fixedpoint.Clear();
+                            
                         }
 
-                        if (beat2vote>=beat4vote && beat2vote>=beat3vote && pattern=="TBTB")
+                        if (pattern == "TLR")
+                            fixedpoint.Clear();
+
+                        if (beat2vote>beat4vote && beat2vote>beat3vote && pattern=="TBTB")
                         {
                             TimeSpan interval = new TimeSpan();
                             for (int i = 1; i < fixedpoint.Count; i++)
@@ -901,20 +949,20 @@ namespace hands_viewer.cs
                         }
 
 
-                        if(pattern!="TBTB"&&pattern!="TBLR"&&pattern!="TLR")
-                        {
-                            errorcount++;
-                            if (errorcount>5)
-                            {
-                                readytostart = false;
-                                init();
-                                Console.WriteLine("Move cursor into the orange circle to restart");
-                            }
-                        }
-                        else
-                        {
-                            errorcount = 0;
-                        }
+                        //if(pattern!="TBTB"&&pattern!="TBLR"&&pattern!="TLR")
+                        //{
+                        //    errorcount++;
+                        //    if (errorcount>100)
+                        //    {
+                        //        readytostart = false;
+                        //        init();
+                        //        Console.WriteLine("Move cursor into the orange circle to restart");
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    errorcount = 0;
+                        //}
 
                         if (fixedpoint.Count>=4)
                             fixedpoint.Clear();
@@ -1006,7 +1054,6 @@ namespace hands_viewer.cs
         static Queue<PXCMPointF32> dataflow = new Queue<PXCMPointF32>();
         static Queue<DataFrame> trace=new Queue<DataFrame>();
 
-        static bool analysison = true;
         public static void beatanalysis()
         {
             System.Threading.Thread.Sleep(1000);
@@ -1021,7 +1068,7 @@ namespace hands_viewer.cs
             readytostart = true;
 
             int flowstopcount = 0;
-            int flowsize = dataflow.Count;
+            System.DateTime dtfupd = dataflowupd;
             int beatcount = 0;
             const int defaultinterval = 500;
             while(true)
@@ -1056,13 +1103,13 @@ namespace hands_viewer.cs
                    // Console.WriteLine((int)intervalms);
                     System.Threading.Thread.Sleep((int)intervalms);
                 }
-                if (dataflow.Count == flowsize && readytostart)
+                if (dataflowupd==dtfupd && readytostart)
                 {
                     flowstopcount += (intervalms == 0 ? defaultinterval : (int)intervalms);
                 }                
                 else if (readytostart)
                 {
-                    flowsize = dataflow.Count;
+                    dtfupd = dataflowupd;
                     flowstopcount = 0;
                 }
                 else if (!readytostart)
@@ -1078,11 +1125,11 @@ namespace hands_viewer.cs
                         
                 }
 
-                if (flowstopcount==3000)
+                if (flowstopcount>=3000 && readytostart)
                 {
-                    flowsize = 0;
-                    init();
                     readytostart = false;
+                    flowstopcount = 0;
+                    init();
                     Console.WriteLine("Move cursor into the orange circle to restart");
                 }
                     
